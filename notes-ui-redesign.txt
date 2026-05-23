@@ -1,0 +1,51 @@
+UI Redesign Reference Notes
+===========================
+
+Screen 1 (Upload):
+- Header: "AI PRICING" (small caps, warm brown)
+- Title: "สแกนเสื้อผ้าเพื่อขาย" (bold, large)
+- Subtitle: "อัพรูป 3 ด้าน: หน้า (จำเป็น) · หลัง · ตำหนิ แล้วกดประเมิน"
+- 3 upload slots in a row: "ด้านหน้า *", "ด้านหลัง *", "ตำหนิ"
+- Each slot: rounded corners, dashed border, warm pink/beige bg, + icon, label below
+- Below slots: "✓ AI วิเคราะห์จริงพร้อมใช้งาน" (small text, centered)
+- Button: "วิเคราะห์ราคา" - full width, rounded pill, warm brown/taupe color (#a08b7a approx)
+- X button top-right corner (close/reset)
+- Overall: very clean, minimal, card-like container with slight shadow
+
+Screen 2 (Result):
+- Top section: product image thumbnail (left) + info (right)
+  - "demo" badge (warm brown pill) + "ความมั่นใจ 88%" text
+  - Product name: "เสื้อเบลาส์" (bold)
+  - Color + Brand: "ขาว · Pomelo"
+  - Condition: "สภาพ: พอใช้" (bold)
+- X button top-right
+
+- Card 1: "หมวดสินค้า (แก้ได้ถ้า AI อ่านผิด)"
+  - Select dropdown showing "เสื้อเบลาส์"
+
+- Card 2: Row of 3 fields
+  - ไซส์: Select "M"
+  - ส่วนสูง (cm): Input "165"
+  - น้ำหนัก (kg): Input "52"
+
+- Card 3 (pink/beige bg): Price recommendation
+  - "ราคาแนะนำตามตลาด"
+  - "฿139" (large, warm brown/coral color, JetBrains Mono)
+  - "ช่วงราคาตลาด ฿109 – ฿179"
+
+- Card 4 (beige bg): Sellability gauge
+  - Semi-circle gauge showing "75"
+  - "ขายง่าย" (warm brown/coral text)
+  - "คาดขายออกใน 7-14 วัน"
+
+- Bottom buttons row:
+  - "สแกนใหม่" (outline, left)
+  - "ลงขายเลย" (filled warm brown, right)
+
+Additional requirements from user:
+- If category is กระโปรง or กางเกง → add เอว + สะโพก fields
+- If category is เสื้อ or เดรส → add อก + ไหล่ fields
+- "ลงขายเลย" button = placeholder (toast)
+- Keep all backend logic (AI detect, consensus, market price, pricing engine)
+- Auto-set sellGoal = "easy_to_sell"
+- Remove: original price input, sell-goal selector, AI detect button

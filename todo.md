@@ -1,0 +1,91 @@
+# Project TODO
+
+- [x] Basic homepage layout with hero section
+- [x] Image upload component (3 slots: front, back, defect)
+- [x] Product details form (category, brand, size, condition)
+- [x] Pricing Engine V1 logic (rule-based)
+- [x] Result panel with GaugeMeter and price recommendations
+- [x] Upgrade to full-stack (tRPC + DB + Auth)
+- [x] AI Vision analysis: auto-detect brand, color, defects from uploaded images
+- [x] Backend API endpoint for AI image analysis (invokeLLM with vision)
+- [x] Loading animation with step-by-step status messages during AI processing
+- [x] Backend API endpoint for AI-generated sales caption
+- [x] Social share buttons (LINE, Facebook, Twitter, Copy)
+- [x] AI-generated catchy sales caption for social media posts
+- [x] Integrate AI analysis results into pricing form (auto-fill fields)
+- [x] Unit tests for AI router (analyzeImage + generateCaption)
+- [x] BUG: ปุ่ม Share + AI Caption ไม่แสดงผลชัดเจน ผู้ใช้หาไม่เจอ - แก้ไขแล้ว: Share Panel เปิดอัตโนมัติหลังประเมินราคา + ปุ่มแชร์ใช้ gradient สีเด่นชัด
+- [x] BUG: iOS ไม่สามารถเข้าถึงอัลบั้มรูปได้ตอนกดถ่ายรูป - ลบ capture attribute ออกแล้ว
+- [x] BUG: เลือก "ไม่มีแบรนด์" แล้วกดประเมินราคาไม่ได้ - แก้ validation + AI auto-fill ให้ default เป็น No Brand
+- [x] UX: ปุ่มประเมินราคากดได้เลยแม้ข้อมูลไม่ครบ แต่แสดงข้อความแจ้งเตือนสีแดงว่าลืมใส่อะไร
+- [x] UX: หน้าผลลัพธ์ให้เลือกเปลี่ยนเป้าหมายการขาย (ขายเร็ว/แนะนำ/ขายคุ้ม) ได้ทันที ราคาอัปเดตเลย
+- [x] SharePanel: AI generate ข้อความอัตโนมัติทันทีที่เปิด (ไม่ต้องกดปุ่ม) และลบปุ่ม "AI สร้างข้อความ" ออก
+- [x] เชื่อมต่อ Retailed.io API เพื่อดึงราคาตลาดจริงมาใช้ในการประเมินราคา
+- [x] สร้าง server-side helper สำหรับเรียก Retailed.io search API
+- [x] แก้ไข AI pricing flow ให้ใช้ข้อมูลราคาจาก Retailed.io ร่วมกับ discount matrix
+- [x] แก้ discount matrix ให้ราคาเหมาะกับตลาดมือสองไทย (fast fashion ลด 85-88%)
+- [x] เพิ่ม international pricing (ราคาต่างประเทศ) แยกเก็บไว้สำหรับ eBay/Amazon ในอนาคต
+- [x] เพิ่ม logic ตรวจจับ collab items ให้ใช้ streetwear tier
+- [x] แสดงราคาทั้ง 2 แบบใน UI (ราคาไทย + ราคาต่างประเทศ)
+- [x] Multi-Agent Consensus: สร้าง service module เรียก GPT-4o + Claude + Gemini Ultra
+- [x] Multi-Agent Consensus: AI 3 ตัวประเมินอิสระ → cross-validate → debate → สรุปผล
+- [x] Multi-Agent Consensus: แสดง confidence score + ผลจากแต่ละ AI ใน UI
+- [x] เพิ่ม env variables: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_AI_API_KEY
+- [x] เชื่อม Gemini ผ่าน Google AI API โดยตรง (gemini-2.0-flash) แทน Manus Forge invokeLLM พร้อม fallback
+- [x] เพิ่ม UI แสดงผลประเมินรายตัว AI (Per-Agent Breakdown) แบบ collapsible ใน PricingResultPanel
+- [x] History/Dashboard: สร้าง DB schema สำหรับเก็บประวัติการประเมินราคา
+- [x] History/Dashboard: สร้าง tRPC routes สำหรับ save/list/delete ประวัติ
+- [x] History/Dashboard: สร้างหน้า Dashboard UI แสดงประวัติทั้งหมด
+- [x] History/Dashboard: บันทึกผลประเมินอัตโนมัติหลังประเมินเสร็จ
+- [x] Auto-post: สร้าง listing generator สำหรับ eBay/Amazon (สร้าง title, description, tags)
+- [x] Auto-post: AI สร้าง listing content อัตโนมัติจากข้อมูลสินค้า + ราคาต่างประเทศ
+- [x] Auto-post: UI สำหรับดู/แก้ไข/คัดลอก listing ที่สร้าง
+- [x] Retailed.io upgrade: เพิ่ม search endpoints ใหม่ (Vestiaire Collective, Depop, Mercari)
+- [x] Retailed.io upgrade: เพิ่ม price comparison view แสดงราคาจากหลาย platform
+- [x] BUG: ราคาแนะนำต่ำกว่าราคาขายเร็ว (logic ผิด: ควรเป็น ขายเร็ว < แนะนำ < ขายคุ้ม)
+- [x] BUG: AI consensus override ราคาต่ำเกินจริง (Levi's กางเกง 250 บาท ควร 899-1299) — ต้อง blend กับ rule-based ไม่ใช่ override ทั้งหมด
+- [x] เพิ่ม unit test สำหรับ pricing blend logic: กรณี AI ให้ราคาต่ำผิดปกติ ต้องไม่ลาก recommended price ลงต่ำเกิน threshold
+- [x] แก้ Retailed integration test ให้ handle 402 (API quota exceeded) gracefully
+- [x] ปรับ AI prompt ให้ระบุช่วงราคาสมเหตุสมผลตามแบรนด์/ประเภท (เช่น Levi's กางเกง 500-2000 บาท)
+- [x] เพิ่ม "ราคาอ้างอิง" badge แสดงสัดส่วน rule-based vs AI weight
+- [x] เพิ่ม manual override slider ให้ผู้ใช้ปรับราคาแนะนำเอง
+- [x] BUG: Rule-based pricing engine ให้ราคาต่ำเกินไป (Levi's กางเกง สภาพพอใช้ = ฿209 ควรเป็น 500-1000) — ต้องปรับ base price table ให้สมเหตุสมผล
+- [x] เพิ่มฐานข้อมูลแบรนด์ให้ครอบคลุม: แบรนด์ไทย (Jaspal, CPS, Greyhound, Sretsis), streetwear (Stussy, Supreme, Off-White), luxury เพิ่มเติม, fast fashion เพิ่มเติม
+- [x] UX: ปุ่มตรวจจับอัตโนมัติให้เด่นขึ้น (สีเด่น/animation) เมื่อ user upload รูปอย่างน้อย 1 รูป
+- [x] Redesign Home page: Screen 1 = upload-only (3 image slots + วิเคราะห์ราคา button)
+- [x] Redesign Home page: Screen 2 = results (AI detected info + editable category + size/height/weight + conditional measurements + price + gauge + buttons)
+- [x] Remove AI auto-detect button from UI (keep logic running automatically on evaluate)
+- [x] Remove original price input field
+- [x] Remove sell-goal selector (auto-use "easy_to_sell")
+- [x] Remove size selector from Screen 1 (move to Screen 2)
+- [x] Add conditional measurement fields: เอว/สะโพก for กางเกง/กระโปรง, อก/ไหล่ for เสื้อ/เดรส
+- [x] Add "ลงขายเลย" button (placeholder, shows toast)
+- [x] Add "สแกนใหม่" button to reset and go back to Screen 1
+- [x] Expand brand database: add Thai brands, K-fashion, Vintage/thrift, Sports brands with proper tier/multiplier
+- [x] Add searchable/filterable brand dropdown (combobox with text input)
+- [x] Expand product categories: Tops (6), Bottoms (5), One-Piece (3), Outerwear (6), Intimates (4), Activewear (3), Swimwear (4)
+- [x] Update CATEGORY_BASE_PRICE for all new subcategories
+- [x] Update AI detection prompts to recognize new subcategories
+- [x] Update conditional measurement fields for new categories
+- [x] Home page: support multi-item scanning (up to 5 items per session)
+- [x] Home page: add "เพิ่มชุด" button to add more items to scan queue
+- [x] Create wardrobe DB table to store scanned clothing items
+- [x] Create wardrobe tRPC routes (save item, list items, delete item)
+- [x] Create Wardrobe page UI showing all saved clothing items as gallery
+- [x] Wire Wardrobe page into App.tsx routing
+- [x] Auto-save scanned items to wardrobe after evaluation (manual save via button)
+- [x] Create 2-phase pipeline: Phase 1 (Vision + Rule-based, 2-3s instant) → Phase 2 (Multi-Agent background refine)
+- [x] Create SSE endpoint for streaming evaluation results to frontend
+- [x] Add Promise.all parallelization in Multi-Agent consensus (already parallel)
+- [x] Update frontend: streaming UI showing progressive results (brand/color first → price → refined price)
+- [x] Add Retailed.io market data cache (24hr TTL) to reduce repeat API calls
+- [x] Fix "สแกนใหม่" button: rescan only that specific item (reset to upload state) without affecting other items
+- [x] Fix rescan: use original images to re-evaluate (no re-upload needed), X button returns to result screen (not page 1)
+- [x] Add checkbox selection for save-to-wardrobe: default all selected, user can deselect items they don't want to save
+- [x] Thai Market Factor: Add brand-tier-based discount factors for Thai market pricing
+- [x] Thai Market Factor: Integrate into server-side rule-based pricing (evaluate-stream.ts)
+- [x] Thai Market Factor: Update multi-agent prompt with detailed Thai market price ranges
+- [x] Thai Market Factor: Show Thai vs International price breakdown in UI
+- [x] Pricing History (A): Add schema fields for sold price, sold date, platform, and status tracking
+- [x] Pricing History (A): Add wardrobe status update mutation (in_wardrobe → listed → sold)
+- [x] Pricing History (A): Add sold price recording to feed back into pricing accuracy

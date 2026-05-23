@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Fashion Pricing Demo</title>
+  <meta name="description" content="AI Fashion Pricing demo ที่เชื่อม backend จริงเมื่อมี API URL และ fallback เป็น static demo เมื่อ backend ไม่พร้อม" />
+  <meta property="og:title" content="AI Fashion Pricing Demo" />
+  <meta property="og:description" content="สแกนเสื้อผ้าเพื่อประเมินราคามือสองในตลาดไทยด้วย AI vision, market data และ fallback demo" />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: oklch(0.975 0.008 75);
+      --foreground: oklch(0.22 0.02 65);
+      --card: oklch(0.995 0.003 75);
+      --muted: oklch(0.94 0.008 75);
+      --muted-foreground: oklch(0.50 0.015 65);
+      --border: oklch(0.90 0.012 75);
+      --warm-50: oklch(0.98 0.008 75);
+      --warm-100: oklch(0.96 0.012 75);
+      --warm-200: oklch(0.92 0.016 75);
+      --warm-800: oklch(0.30 0.02 65);
+      --teal-50: #ecfdf9;
+      --teal-600: oklch(0.55 0.14 175);
+      --amber-50: #fffbeb;
+      --amber-700: #b45309;
+      --rose-50: #fff1f2;
+      --rose-500: #f43f5e;
+      --brand: #a08b7a;
+      --brand-disabled: #d4c8be;
+      --price-bg: #f8ebe5;
+      --radius: 1.5rem;
+      --shadow: 0 22px 60px rgba(64, 48, 34, .10);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--foreground);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(160,139,122,.12), transparent 30%),
+        radial-gradient(circle at 88% 4%, rgba(13,148,136,.08), transparent 32%),
+        var(--background);
+    }
+    button, select, input { font: inherit; }
+    button:not(:disabled), select:not(:disabled), input[type=file]:not(:disabled), a[href] { cursor: pointer; }
+    a { color: inherit; }
+
+    .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+    .top-action { position: fixed; top: 1rem; right: 1rem; z-index: 40; display: flex; gap: .5rem; }
+    .outline-pill {
+      min-height: 2rem; padding: .42rem .72rem; border-radius: .75rem; border: 1px solid var(--border);
+      background: rgba(255,255,255,.9); box-shadow: 0 6px 18px rgba(64,48,34,.06); backdrop-filter: blur(8px);
+      color: var(--warm-800); text-decoration: none; font-size: .76rem; font-weight: 700; display: inline-flex; align-items: center; gap: .35rem;
+    }
+
+    .screen { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1rem; animation: enter .26s ease-out; }
+    @keyframes enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .upload-wrap { width: 100%; max-width: 32rem; margin: auto; }
+    .result-wrap { width: 100%; max-width: 28rem; margin: auto; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 1.5rem; box-shadow: var(--shadow); }
+    .main-card { padding: 1.5rem; position: relative; }
+    @media (min-width: 640px) { .main-card { padding: 2rem; } }
+
+    .header { text-align: center; margin-bottom: 1.5rem; }
+    .eyebrow { margin: 0 0 .5rem; color: color-mix(in srgb, var(--warm-800) 60%, transparent); font-size: .75rem; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: .5rem; font-size: clamp(1.25rem, 4.5vw, 1.55rem); line-height: 1.24; font-weight: 800; letter-spacing: -.025em; }
+    h2 { margin-bottom: .35rem; font-size: 1.05rem; line-height: 1.25; font-weight: 800; letter-spacing: -.02em; }
+    h3 { margin-bottom: .6rem; font-size: .95rem; font-weight: 800; }
+    .subtext { margin: 0; color: var(--muted-foreground); font-size: .88rem; line-height: 1.6; }
+    .tiny { color: var(--muted-foreground); font-size: .76rem; line-height: 1.45; }
+
+    .scan-list { display: grid; gap: 1rem; margin-bottom: 1rem; }
+    .scan-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+    .scan-label { color: color-mix(in srgb, var(--warm-800) 72%, transparent); font-size: .76rem; font-weight: 800; }
+    .icon-btn { width: 1.35rem; height: 1.35rem; border: 0; border-radius: 999px; background: var(--rose-50); display: grid; place-items: center; color: var(--rose-500); }
+    .slot-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+    .upload-slot { position: relative; aspect-ratio: 3 / 4; width: 100%; border-radius: 1rem; overflow: hidden; }
+    .upload-slot input { position: absolute; inset: 0; opacity: 0; z-index: 3; }
+    .empty-slot {
+      width: 100%; height: 100%; border: 2px dashed var(--warm-200); border-radius: 1rem;
+      background: #fdf5f0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .45rem;
+      color: color-mix(in srgb, var(--warm-800) 70%, transparent); transition: .18s ease;
+    }
+    .upload-slot:hover .empty-slot { border-color: #d7c6b8; transform: translateY(-1px); }
+    .plus { font-size: 1.55rem; line-height: 1; color: color-mix(in srgb, var(--warm-800) 50%, transparent); }
+    .slot-text { font-size: .7rem; font-weight: 800; text-align: center; padding: 0 .25rem; }
+    .preview-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 2px solid var(--warm-200); border-radius: 1rem; }
+    .preview-caption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 1rem .5rem .45rem; color: white; font-size: .66rem; font-weight: 800; background: linear-gradient(to top, rgba(0,0,0,.52), transparent); }
+    .remove-image { position: absolute; top: .35rem; right: .35rem; z-index: 4; width: 1.35rem; height: 1.35rem; border: 0; border-radius: 999px; background: rgba(255,255,255,.9); color: var(--rose-500); display: grid; place-items: center; opacity: 0; transition: .18s ease; }
+    .upload-slot:hover .remove-image { opacity: 1; }
+
+    .dash-separator { border: 0; border-top: 1px dashed var(--warm-200); margin: 1rem 0 0; }
+    .add-item { width: 100%; min-height: 2.9rem; border: 2px dashed var(--warm-200); border-radius: .9rem; background: transparent; color: color-mix(in srgb, var(--warm-800) 70%, transparent); display: flex; align-items: center; justify-content: center; gap: .5rem; font-size: .78rem; font-weight: 800; margin-bottom: 1rem; transition: .18s ease; }
+    .add-item:hover { border-color: #d7c6b8; background: rgba(255,255,255,.45); }
+    .ready { display: flex; align-items: center; justify-content: center; gap: .4rem; margin-bottom: 1rem; color: var(--muted-foreground); font-size: .78rem; }
+    .ready b { color: var(--teal-600); font-size: 1rem; }
+    .backend-panel { margin: .85rem 0 1rem; padding: .7rem .8rem; border-radius: .85rem; border: 1px solid var(--warm-200); background: rgba(255,255,255,.68); color: var(--muted-foreground); font-size: .72rem; line-height: 1.45; }
+    .backend-panel strong { color: var(--warm-800); }
+    .backend-panel button { margin-top: .45rem; border: 0; background: transparent; color: var(--teal-600); font-weight: 800; padding: 0; font-size: .72rem; }
+    .analysis-status { display: none; margin-top: .7rem; color: var(--muted-foreground); text-align: center; font-size: .74rem; line-height: 1.45; }
+    .analysis-status.show { display: block; }
+    .primary-btn, .secondary-btn {
+      border: 0; min-height: 3rem; border-radius: 999px; font-size: .88rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; transition: .18s ease;
+    }
+    .primary-btn { width: 100%; color: white; background: var(--brand); box-shadow: 0 12px 28px rgba(160,139,122,.18); }
+    .primary-btn:disabled { background: var(--brand-disabled); box-shadow: none; cursor: not-allowed; }
+    .secondary-btn { color: var(--warm-800); background: white; border: 1px solid var(--warm-200); }
+    .primary-btn:not(:disabled):hover, .secondary-btn:not(:disabled):hover { transform: translateY(-1px); }
+
+    .nav-dots { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+    .nav-arrow { height: 2rem; min-width: 2rem; border: 0; border-radius: .75rem; background: transparent; color: var(--warm-800); font-size: 1.1rem; }
+    .dots { display: flex; align-items: center; justify-content: center; gap: .45rem; }
+    .dot { width: .62rem; height: .62rem; border: 0; border-radius: 999px; background: var(--warm-200); transition: .18s ease; }
+    .dot.active { background: var(--brand); transform: scale(1.25); }
+    .dot.saved { background: var(--teal-600); }
+    .close-btn { position: absolute; top: 1rem; right: 1rem; width: 2rem; height: 2rem; border: 0; border-radius: 999px; background: var(--warm-100); color: var(--warm-800); display: grid; place-items: center; transition: .18s ease; }
+    .close-btn:hover { background: var(--warm-200); }
+
+    .product-head { display: flex; gap: .75rem; padding-right: 2rem; }
+    .thumb { width: 5rem; height: 5rem; flex: 0 0 auto; border-radius: .8rem; overflow: hidden; border: 1px solid var(--warm-200); background: var(--warm-100); }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .product-copy { min-width: 0; flex: 1; padding-top: .1rem; }
+    .status-line { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; margin-bottom: .3rem; }
+    .badge { display: inline-flex; align-items: center; gap: .25rem; padding: .18rem .5rem; border-radius: 999px; color: white; background: var(--teal-600); font-size: .63rem; font-weight: 800; }
+    .badge.pending { color: var(--amber-700); background: var(--amber-50); border: 1px solid #fde68a; }
+    .confidence { color: var(--muted-foreground); font-size: .7rem; }
+    .product-title { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem; font-weight: 800; }
+    .product-meta { margin: .2rem 0 0; color: var(--muted-foreground); font-size: .76rem; }
+    .product-condition { margin: .18rem 0 0; font-size: .76rem; }
+    .form-block { background: var(--warm-50); border: 1px solid var(--warm-200); border-radius: .9rem; padding: .85rem; }
+    .stack { display: grid; gap: .75rem; margin-top: 1rem; }
+    label { display: block; margin-bottom: .35rem; color: var(--muted-foreground); font-size: .72rem; font-weight: 700; }
+    select, input[type=number], input[type=text] { width: 100%; min-height: 2.45rem; border: 1px solid var(--warm-200); border-radius: .65rem; background: white; color: var(--foreground); padding: 0 .75rem; font-size: .82rem; outline: none; }
+    select:focus, input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(160,139,122,.12); }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+
+    .price-card { border-radius: .9rem; padding: 1rem; text-align: center; background: var(--price-bg); }
+    .price-card.refined { background: var(--teal-50); border: 2px solid #99f6e4; }
+    .price-top { display: flex; align-items: center; justify-content: center; gap: .45rem; margin-bottom: .25rem; color: color-mix(in srgb, var(--warm-800) 72%, transparent); font-size: .76rem; }
+    .amount { margin: 0; color: var(--brand); font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; line-height: 1.1; }
+    .refined .amount { color: var(--teal-600); }
+    .range { margin: .25rem 0 0; color: var(--muted-foreground); font-size: .76rem; }
+    .market-badge { margin-top: .65rem; padding-top: .65rem; border-top: 1px solid color-mix(in srgb, var(--warm-200) 55%, transparent); color: var(--muted-foreground); font-size: .66rem; line-height: 1.45; }
+    .thai-pill { display: inline-flex; align-items: center; padding: .12rem .45rem; border-radius: 999px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: .64rem; font-weight: 800; margin-right: .35rem; }
+
+    .sell-card { background: var(--warm-50); border: 1px solid var(--warm-200); border-radius: .9rem; padding: 1rem; }
+    .sell-row { display: flex; align-items: center; gap: 1rem; }
+    .gauge { width: 6.25rem; height: 4.05rem; flex: 0 0 auto; }
+    .gauge text { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+    .sell-label { margin: 0; color: var(--brand); font-size: 1rem; font-weight: 800; }
+    .sell-days { margin: .12rem 0 0; color: var(--muted-foreground); font-size: .76rem; }
+    .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; padding-top: .25rem; }
+    .caption-box { background: #10282b; color: #eafffb; border-radius: .9rem; padding: .85rem; white-space: pre-wrap; line-height: 1.6; font-size: .76rem; display: none; }
+    .caption-box.show { display: block; }
+    .history-box { margin-top: 1rem; border: 1px solid var(--warm-200); border-radius: .9rem; padding: .75rem; display: none; }
+    .history-box.show { display: block; }
+    .history-row { display: flex; justify-content: space-between; gap: .75rem; font-size: .75rem; padding: .45rem 0; border-bottom: 1px solid var(--warm-200); }
+    .history-row:last-child { border-bottom: 0; }
+
+    .static-note { margin: 1rem auto 0; max-width: 28rem; color: var(--muted-foreground); text-align: center; font-size: .7rem; line-height: 1.5; }
+    .hidden { display: none !important; }
+    @media (max-width: 430px) {
+      .screen { padding: .75rem; align-items: flex-start; padding-top: 4.25rem; }
+      .top-action { left: .75rem; right: .75rem; justify-content: flex-end; }
+      .main-card { padding: 1.15rem; }
+      .slot-grid { gap: .5rem; }
+      .grid-3 { gap: .45rem; }
+      .amount { font-size: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="top-action">
+      <a class="outline-pill" href="https://github.com/aiteammate9-rgb/fashion-pricing-demo" target="_blank" rel="noreferrer">Source code</a>
+      <button class="outline-pill" id="wardrobeBtn" type="button">ตู้เสื้อผ้า</button>
+    </div>
+
+    <main>
+      <section class="screen" id="uploadScreen">
+        <div class="upload-wrap">
+          <div class="card main-card">
+            <div class="header">
+              <p class="eyebrow">AI Pricing</p>
+              <h1>สแกนเสื้อผ้าเพื่อขาย</h1>
+              <p class="subtext">อัพรูป 3 ด้าน: หน้า (จำเป็น) · หลัง · ตำหนิ แล้วกดประเมิน</p>
+              <p class="tiny" style="margin-top:.25rem">สแกนได้สูงสุด 5 ชุดต่อครั้ง</p>
+            </div>
+            <div class="backend-panel" id="backendPanel">
+              <strong id="backendStatusTitle">กำลังตรวจ backend</strong><br>
+              <span id="backendStatusText">ถ้ามี API URL ระบบจะใช้ AI vision + market data + consensus หลายโมเดลจริง หากไม่พบจะ fallback เป็น demo mode</span><br>
+              <button id="backendConfigBtn" type="button">ตั้งค่า Backend URL</button>
+            </div>
+            <div class="scan-list" id="scanList"></div>
+            <button class="add-item" id="addItemBtn" type="button"><span class="plus" style="font-size:1rem">＋</span><span id="addText">เพิ่มชุด (1/5)</span></button>
+            <div class="ready"><b>✓</b><span id="readyText">พร้อมวิเคราะห์ด้วย backend จริงเมื่อเชื่อมต่อได้</span></div>
+            <button class="primary-btn" id="analyzeBtn" disabled>วิเคราะห์ราคา</button>
+            <div class="analysis-status" id="analysisStatus"></div>
+          </div>
+          <p class="static-note">หมายเหตุ: เพื่อความปลอดภัย GitHub Pages จะไม่เก็บ API key เอง หน้านี้จะเรียก backend ที่ตั้งค่าไว้เท่านั้น; หาก backend ไม่พร้อม ระบบจะแสดงผล demo fallback อย่างชัดเจน</p>
+        </div>
+      </section>
+
+      <section class="screen hidden" id="resultScreen">
+        <div class="result-wrap">
+          <div class="nav-dots hidden" id="itemNav">
+            <button class="nav-arrow" id="prevBtn" type="button">‹</button>
+            <div class="dots" id="dots"></div>
+            <button class="nav-arrow" id="nextBtn" type="button">›</button>
+          </div>
+          <div class="card main-card" id="resultCard">
+            <button class="close-btn" id="closeBtn" type="button">×</button>
+            <div id="resultCounter" class="tiny" style="text-align:center;margin-bottom:.5rem;display:none"></div>
+            <div class="product-head">
+              <div class="thumb" id="thumbBox"></div>
+              <div class="product-copy">
+                <div class="status-line"><span class="badge" id="verifiedBadge">AI verified</span><span class="confidence" id="confidenceText">ความมั่นใจ 92%</span></div>
+                <h2 class="product-title" id="productTitle">เสื้อยืด</h2>
+                <p class="product-meta" id="productMeta">ครีม · Uniqlo</p>
+                <p class="product-condition">สภาพ: <strong id="conditionText">สภาพดี</strong></p>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="form-block">
+                <label for="category">หมวดสินค้า (แก้ได้ถ้า AI อ่านผิด)</label>
+                <select id="category"></select>
+              </div>
+              <div class="form-block">
+                <label for="brand">แบรนด์ (แก้ได้ถ้า AI อ่านผิด)</label>
+                <select id="brand"></select>
+              </div>
+              <div class="form-block">
+                <div class="grid-3">
+                  <div><label for="size">ไซส์</label><select id="size"></select></div>
+                  <div><label for="height">ส่วนสูง (cm)</label><input id="height" type="number" placeholder="165"></div>
+                  <div><label for="weight">น้ำหนัก (kg)</label><input id="weight" type="number" placeholder="52"></div>
+                </div>
+                <div class="grid-2" id="bodyMeasure" style="margin-top:.65rem"></div>
+              </div>
+              <div class="form-block">
+                <div class="grid-2">
+                  <div><label for="condition">สภาพสินค้า</label><select id="condition"></select></div>
+                  <div><label for="defect">ระดับตำหนิ</label><select id="defect"></select></div>
+                </div>
+              </div>
+
+              <div class="price-card refined" id="priceCard">
+                <div class="price-top"><span>ราคาแนะนำตามตลาด</span><span class="badge pending" id="pricingSourceBadge" style="font-size:.58rem;padding:.1rem .4rem">กำลังตรวจสอบ</span></div>
+                <p class="amount" id="recommendedPrice">฿220</p>
+                <p class="range" id="marketRange">ช่วงราคาตลาด ฿170 – ฿270</p>
+                <div class="market-badge" id="thaiMarket"><span class="thai-pill">Thai Market</span><span>ปรับราคาให้เหมาะกับตลาดมือสองไทย</span></div>
+              </div>
+
+              <div class="sell-card">
+                <div class="sell-row">
+                  <svg class="gauge" viewBox="0 0 120 76" aria-label="sellability score">
+                    <path d="M 16 60 A 44 44 0 0 1 104 60" fill="none" stroke="#e8e4df" stroke-width="12" stroke-linecap="round" />
+                    <path id="gaugeArc" d="M 16 60 A 44 44 0 0 1 104 60" fill="none" stroke="#a08b7a" stroke-width="12" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="42" />
+                    <text id="gaugeScore" x="60" y="58" text-anchor="middle" font-size="22" fill="#a08b7a">71</text>
+                  </svg>
+                  <div>
+                    <p class="sell-label" id="sellLabel">ขายง่าย</p>
+                    <p class="sell-days" id="sellDays">คาดขายออกใน 7-14 วัน</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="caption-box" id="captionBox"></div>
+              <div class="actions">
+                <button class="secondary-btn" id="rescanBtn" type="button">↻ สแกนใหม่</button>
+                <button class="primary-btn" id="saveBtn" type="button">บันทึกเข้าตู้</button>
+              </div>
+              <button class="secondary-btn" id="copyBtn" type="button" style="width:100%;min-height:2.6rem">แสดง/คัดลอกแคปชันโพสต์ขาย</button>
+              <div class="history-box" id="historyBox"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const MAX_ITEMS = 5;
+    const DEFAULT_BACKEND_URL = window.FASHION_PRICING_API_URL || localStorage.getItem('fashionPricingBackendUrl') || '';
+    let backendBaseUrl = DEFAULT_BACKEND_URL.replace(/\/$/, '');
+    let backendAvailable = false;
+    let analyzing = false;
+
+    const categoryBase = {
+      t_shirt:{low:120,mid:250,high:450,premium:900,label:'เสื้อยืด'}, shirt:{low:150,mid:350,high:600,premium:1200,label:'เสื้อเชิ้ต'}, blouse:{low:150,mid:350,high:600,premium:1200,label:'เสื้อเบลาส์'}, crop_top:{low:140,mid:320,high:580,premium:1100,label:'ครอปท็อป'}, camisole:{low:80,mid:180,high:350,premium:700,label:'เสื้อสายเดี่ยว'}, tank_top:{low:80,mid:180,high:350,premium:700,label:'เสื้อกล้าม'}, jeans:{low:200,mid:450,high:850,premium:1800,label:'ยีนส์'}, pants:{low:180,mid:400,high:750,premium:1500,label:'กางเกง'}, shorts:{low:120,mid:280,high:500,premium:1000,label:'กางเกงขาสั้น'}, skirt:{low:180,mid:380,high:700,premium:1400,label:'กระโปรง'}, leggings:{low:100,mid:250,high:500,premium:1000,label:'เลกกิ้ง'}, dress:{low:250,mid:500,high:900,premium:1800,label:'เดรส'}, jumpsuit:{low:250,mid:500,high:900,premium:1800,label:'จัมป์สูท'}, romper:{low:200,mid:400,high:750,premium:1500,label:'รอมเปอร์'}, blazer:{low:350,mid:700,high:1200,premium:2500,label:'เบลเซอร์'}, jacket:{low:350,mid:700,high:1200,premium:2500,label:'แจ็กเก็ต'}, cardigan:{low:200,mid:400,high:700,premium:1400,label:'คาร์ดิแกน'}, sweater:{low:200,mid:400,high:700,premium:1400,label:'สเวตเตอร์'}, hoodie:{low:200,mid:400,high:750,premium:1500,label:'ฮู้ดดี้'}, coat:{low:500,mid:900,high:1500,premium:3500,label:'โค้ต'}, sports_bra:{low:100,mid:250,high:500,premium:1000,label:'สปอร์ตบรา'}, yoga_pants:{low:150,mid:350,high:700,premium:1400,label:'กางเกงโยคะ'}, running_set:{low:150,mid:350,high:650,premium:1300,label:'ชุดออกกำลังกาย'}, bikini:{low:150,mid:350,high:600,premium:1200,label:'บิกินี'}, one_piece_swim:{low:180,mid:400,high:700,premium:1400,label:'ชุดว่ายน้ำ'}, two_piece_swim:{low:150,mid:350,high:600,premium:1200,label:'ชุดว่ายน้ำทูพีซ'}, beachwear:{low:120,mid:280,high:500,premium:1000,label:'ชุดชายหาด'}, bag:{low:250,mid:600,high:1200,premium:3000,label:'กระเป๋า'}
+    };
+    const brands = ['No Brand','Uniqlo','H&M','Zara','Pomelo','Jaspal','Gentlewoman',"Levi's",'Nike','Adidas','Burberry','Chanel','Gucci'];
+    const brandTier = {'no brand':'low','uniqlo':'mid','h&m':'mid','zara':'high','pomelo':'mid','jaspal':'high','gentlewoman':'high',"levi's":'high','nike':'high','adidas':'high','burberry':'premium','chanel':'premium','gucci':'premium'};
+    const sizes = ['XS','S','M','L','XL','Free Size'];
+    const conditions = [{value:'new_with_tag',label:'ใหม่ ป้ายติด'},{value:'like_new',label:'เหมือนใหม่'},{value:'good',label:'สภาพดี'},{value:'fair',label:'พอใช้'},{value:'defective',label:'มีตำหนิชัดเจน'}];
+    const defects = [{value:'none',label:'ไม่มีตำหนิ'},{value:'minor',label:'ตำหนิเล็กน้อย'},{value:'major',label:'ตำหนิชัดเจน'}];
+    const conditionMul = { new_with_tag: 1.18, like_new: 1.05, good: .88, fair: .62, defective: .42 };
+    const defectMul = { none: 1, minor: .88, major: .62 };
+    const needsWaistHip = cat => ['jeans','pants','skirt'].includes(cat);
+    const needsBustShoulder = cat => ['t_shirt','shirt','blouse','crop_top','dress','blazer','jacket','hoodie'].includes(cat);
+    const $ = id => document.getElementById(id);
+    const fmt = n => '฿' + Math.round(n / 10) * 10;
+
+    let scanItems = [{ id: 1, slots: [null, null, null] }];
+    let nextId = 2;
+    let results = [];
+    let activeIndex = 0;
+    let captionVisible = false;
+
+    function optionList(items, selected) {
+      return items.map(item => {
+        const value = typeof item === 'string' ? item : item.value;
+        const label = typeof item === 'string' ? item : item.label;
+        return `<option value="${value}" ${value === selected ? 'selected' : ''}>${label}</option>`;
+      }).join('');
+    }
+
+    function renderScanList() {
+      $('scanList').innerHTML = scanItems.map((item, itemIdx) => `
+        <div class="scan-item" data-item="${item.id}">
+          ${scanItems.length > 1 ? `<div class="scan-head"><span class="scan-label">ชุดที่ ${itemIdx + 1}</span><button class="icon-btn" type="button" data-remove-item="${item.id}">×</button></div>` : ''}
+          <div class="slot-grid">
+            ${['ด้านหน้า *','ด้านหลัง *','ตำหนิ'].map((label, slotIdx) => {
+              const url = item.slots[slotIdx]?.url;
+              return `<label class="upload-slot">
+                <input type="file" accept="image/*" data-item="${item.id}" data-slot="${slotIdx}">
+                ${url ? `<img class="preview-img" src="${url}" alt="${label}"><button class="remove-image" type="button" data-remove-image="${item.id}:${slotIdx}">×</button><div class="preview-caption">${label}</div>` : `<div class="empty-slot"><span class="plus">＋</span><span class="slot-text">${label}</span></div>`}
+              </label>`;
+            }).join('')}
+          </div>
+          ${itemIdx < scanItems.length - 1 ? '<hr class="dash-separator">' : ''}
+        </div>
+      `).join('');
+      $('addText').textContent = `เพิ่มชุด (${scanItems.length}/${MAX_ITEMS})`;
+      $('addItemBtn').style.display = scanItems.length >= MAX_ITEMS ? 'none' : 'flex';
+      $('analyzeBtn').disabled = !scanItems.some(item => item.slots.some(Boolean));
+    }
+
+    function detectDefaults(index) {
+      const presets = [
+        { category: 't_shirt', brand: 'Uniqlo', color: 'ครีม', condition: 'good', defect: 'none', confidence: 92 },
+        { category: 'dress', brand: 'Zara', color: 'ดำ', condition: 'like_new', defect: 'none', confidence: 89 },
+        { category: 'jeans', brand: "Levi's", color: 'น้ำเงิน', condition: 'good', defect: 'minor', confidence: 87 },
+        { category: 'blazer', brand: 'Jaspal', color: 'เบจ', condition: 'good', defect: 'none', confidence: 90 },
+        { category: 'bag', brand: 'No Brand', color: 'น้ำตาล', condition: 'fair', defect: 'minor', confidence: 82 }
+      ];
+      return presets[index % presets.length];
+    }
+
+    function calculate(item) {
+      const tier = brandTier[item.brand.toLowerCase()] || 'mid';
+      const base = categoryBase[item.category][tier];
+      let recommended = base * conditionMul[item.condition] * defectMul[item.defect];
+      if (item.brand === 'No Brand') recommended *= .88;
+      const score = Math.max(28, Math.min(94, Math.round(52 + (tier==='premium'?18:tier==='high'?12:tier==='mid'?6:0) + (item.condition==='new_with_tag'?14:item.condition==='like_new'?10:item.condition==='good'?5:item.condition==='fair'?-8:-18) + (item.defect==='none'?8:item.defect==='minor'?-4:-18))));
+      return { recommended: Math.round(recommended / 10) * 10, fast: Math.round(recommended * .78 / 10) * 10, high: Math.round(recommended * 1.22 / 10) * 10, score };
+    }
+
+    function getSell(score) {
+      if (score >= 80) return { label: 'ขายง่ายมาก', days: '3-7 วัน', color: '#0d9488' };
+      if (score >= 65) return { label: 'ขายง่าย', days: '7-14 วัน', color: '#a08b7a' };
+      if (score >= 50) return { label: 'พอขายได้', days: '14-30 วัน', color: '#b45309' };
+      return { label: 'ขายยาก', days: '30+ วัน', color: '#e11d48' };
+    }
+
+
+    function setBackendStatus(kind, detail) {
+      const title = $('backendStatusTitle');
+      const text = $('backendStatusText');
+      if (!title || !text) return;
+      if (!backendBaseUrl) {
+        title.textContent = 'ยังไม่ได้ตั้งค่า backend จริง';
+        text.textContent = 'ตอนนี้จะใช้ demo fallback หากต้องการ AI 3 ตัวและ retails.io ให้ตั้งค่า Backend URL ที่ deploy server แล้ว';
+        $('readyText').textContent = 'Demo fallback พร้อมใช้งาน · ยังไม่เชื่อม backend จริง';
+        backendAvailable = false;
+        return;
+      }
+      title.textContent = kind;
+      text.textContent = detail;
+      $('readyText').textContent = backendAvailable ? 'พร้อมวิเคราะห์ด้วย backend จริง' : 'จะลอง backend ก่อน ถ้าไม่สำเร็จจะ fallback เป็น demo';
+    }
+
+    async function checkBackend() {
+      if (!backendBaseUrl) return setBackendStatus('', '');
+      try {
+        const res = await fetch(`${backendBaseUrl}/health`, { method: 'GET' });
+        backendAvailable = res.ok;
+        let detail = `${backendBaseUrl} · ระบบจะลองเรียกจริงก่อน fallback`;
+        let title = res.ok ? 'เชื่อม backend จริงแล้ว' : 'พบ backend แต่ health check ไม่ผ่าน';
+        if (res.ok) {
+          try {
+            const health = await res.json();
+            const c = health.capabilities || {};
+            const aiText = c.multiAgentReady
+              ? 'AI 3 ตัวพร้อมใช้งานจริง'
+              : c.openaiCompatible
+                ? 'มี AI vision อย่างน้อย 1 provider แต่ยังไม่ครบ AI 3 ตัว'
+                : 'ยังไม่มี AI provider ที่พร้อมใช้งาน';
+            const marketText = c.marketReady ? 'retails.io พร้อมใช้งาน' : 'ยังไม่ได้ตั้งค่า retails.io';
+            detail = `${backendBaseUrl} · ${aiText} · ${marketText}`;
+            if (!c.multiAgentReady || !c.marketReady) title = 'เชื่อม backend แล้ว แต่ provider ยังไม่ครบ';
+          } catch (_) {
+            detail = `${backendBaseUrl} · backend online แต่ยังอ่าน capability ไม่ได้`;
+          }
+        }
+        setBackendStatus(title, detail);
+      } catch (err) {
+        backendAvailable = false;
+        setBackendStatus('ยังเชื่อม backend ไม่ได้', `${backendBaseUrl} · ระบบจะ fallback เป็น demo mode จนกว่า backend จะออนไลน์`);
+      }
+    }
+
+    function normalizeCategory(value) {
+      if (!value) return 't_shirt';
+      const key = String(value).toLowerCase().replace(/\s+/g, '_');
+      return categoryBase[key] ? key : 't_shirt';
+    }
+
+    function normalizeBrand(value) {
+      if (!value || /ไม่ระบุ|unknown|no.?brand/i.test(String(value))) return 'No Brand';
+      const found = brands.find(b => b.toLowerCase() === String(value).toLowerCase());
+      if (found) return found;
+      const cleaned = String(value).trim();
+      if (cleaned && !brands.includes(cleaned)) brands.push(cleaned);
+      return cleaned || 'No Brand';
+    }
+
+    function normalizeCondition(value) {
+      const key = String(value || 'good').toLowerCase();
+      if (key === 'poor') return 'defective';
+      return conditions.some(c => c.value === key) ? key : 'good';
+    }
+
+    function normalizeDefect(value, defectsList = []) {
+      const key = String(value || '').toLowerCase();
+      if (key === 'major' || defectsList.length >= 2) return 'major';
+      if (key === 'minor' || key === 'moderate' || defectsList.length === 1) return 'minor';
+      return 'none';
+    }
+
+    function backendPriceToClient(p) {
+      if (!p) return null;
+      return {
+        recommended: p.recommendedPrice || p.recommended || 0,
+        fast: p.fastSalePrice || p.marketMin || p.fast || 0,
+        high: p.highValuePrice || p.marketMax || p.high || 0,
+        score: p.sellabilityScore || p.score || 70,
+      };
+    }
+
+    function applyPhase1(data) {
+      const item = results[data.itemIndex];
+      if (!item) return;
+      const d = data.detection || {};
+      item.category = normalizeCategory(d.category);
+      item.brand = normalizeBrand(d.brand);
+      item.color = d.primaryColor || item.color || 'ไม่ระบุสี';
+      item.condition = normalizeCondition(d.condition);
+      item.defect = normalizeDefect(d.defectLevel, d.defects);
+      item.confidence = Math.round(d.confidence || item.confidence || 70);
+      item.priceOverride = backendPriceToClient(data.ruleBasedPrice) || item.priceOverride;
+      item.aiStatus = 'AI vision verified';
+      item.source = 'backend_phase1';
+      item.material = d.material || '';
+      item.pattern = d.pattern || '';
+      if (activeIndex === data.itemIndex) renderResult();
+    }
+
+    function applyMarket(data) {
+      const item = results[data.itemIndex];
+      if (!item) return;
+      item.marketFound = Boolean(data.marketData?.found);
+      if (data.marketData?.bestEstimate) {
+        const estimate = Number(data.marketData.bestEstimate);
+        item.priceOverride = { recommended: Math.round(estimate), fast: Math.round(estimate * .75), high: Math.round(estimate * 1.35), score: item.priceOverride?.score || 72 };
+      }
+      if (activeIndex === data.itemIndex) renderResult();
+    }
+
+    function applyPhase2(data) {
+      const item = results[data.itemIndex];
+      if (!item) return;
+      item.priceOverride = backendPriceToClient(data.refinedPrice) || item.priceOverride;
+      item.confidence = Math.round(data.consensus?.confidence || item.confidence || 80);
+      item.agentCount = data.consensus?.agentCount || data.consensus?.agentResults?.length || 0;
+      item.aiStatus = 'AI consensus verified';
+      item.source = 'backend_phase2';
+      item.marketFound = true;
+      if (activeIndex === data.itemIndex) renderResult();
+    }
+
+    function setAnalysisStatus(message, show = true) {
+      $('analysisStatus').textContent = message;
+      $('analysisStatus').classList.toggle('show', show);
+    }
+
+    function fileToPayload(file, label) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = String(reader.result || '');
+          resolve({ base64: dataUrl.split(',')[1] || '', mimeType: file.type || 'image/jpeg', label });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function parseSseChunk(buffer, onEvent) {
+      const events = buffer.split('\n\n');
+      const remainder = events.pop() || '';
+      for (const block of events) {
+        const eventLine = block.split('\n').find(line => line.startsWith('event:'));
+        const dataLine = block.split('\n').find(line => line.startsWith('data:'));
+        if (!eventLine || !dataLine) continue;
+        const eventName = eventLine.replace(/^event:\s*/, '').trim();
+        try { onEvent(eventName, JSON.parse(dataLine.replace(/^data:\s*/, ''))); } catch {}
+      }
+      return remainder;
+    }
+
+    async function callBackend(items) {
+      if (!backendBaseUrl) throw new Error('ยังไม่ได้ตั้งค่า Backend URL');
+      setAnalysisStatus('กำลังส่งรูปไปยัง backend จริง: AI vision → retails.io → AI consensus หลายโมเดล');
+      const payloadItems = await Promise.all(items.map(async (item) => ({
+        images: (await Promise.all(item.slots.map((slot, idx) => slot?.file ? fileToPayload(slot.file, ['front','back','defect'][idx]) : null))).filter(Boolean),
+      })));
+      const res = await fetch(`${backendBaseUrl}/api/evaluate-stream-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: payloadItems }),
+      });
+      if (!res.ok || !res.body) throw new Error(`backend status ${res.status}`);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        buffer = parseSseChunk(buffer, (eventName, data) => {
+          if (eventName === 'phase1') { applyPhase1(data); setAnalysisStatus('ได้ผล AI vision แล้ว · กำลังดึงข้อมูลตลาดและ consensus'); }
+          if (eventName === 'market') { applyMarket(data); setAnalysisStatus('พบข้อมูลตลาดจาก retails.io/market source · กำลังรอ AI consensus'); }
+          if (eventName === 'phase2') { applyPhase2(data); setAnalysisStatus('ได้ผล AI consensus หลายโมเดลแล้ว'); }
+          if (eventName === 'error') setAnalysisStatus(`backend แจ้งข้อผิดพลาด: ${data.message || 'unknown'} · ใช้ fallback ชั่วคราว`);
+        });
+      }
+      setAnalysisStatus('วิเคราะห์เสร็จแล้วด้วย backend จริง', true);
+    }
+
+    function showResults() {
+      $('uploadScreen').classList.add('hidden');
+      $('resultScreen').classList.remove('hidden');
+      renderResult();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderResult() {
+      const item = results[activeIndex];
+      if (!item) return;
+      const price = item.priceOverride || calculate(item);
+      const sell = getSell(price.score);
+      const catLabel = categoryBase[item.category].label;
+      const conditionLabel = conditions.find(c => c.value === item.condition)?.label || item.condition;
+      const defectLabel = defects.find(d => d.value === item.defect)?.label || item.defect;
+      const image = item.image || '';
+
+      $('itemNav').classList.toggle('hidden', results.length <= 1);
+      $('resultCounter').style.display = results.length > 1 ? 'block' : 'none';
+      $('resultCounter').textContent = `ชุดที่ ${activeIndex + 1} / ${results.length}`;
+      $('dots').innerHTML = results.map((r, idx) => `<button class="dot ${idx === activeIndex ? 'active' : ''} ${r.saved ? 'saved' : ''}" data-goto="${idx}" type="button"></button>`).join('');
+      $('prevBtn').disabled = activeIndex === 0;
+      $('nextBtn').disabled = activeIndex === results.length - 1;
+      $('thumbBox').innerHTML = image ? `<img src="${image}" alt="Product">` : '';
+      $('verifiedBadge').textContent = item.saved ? 'บันทึกแล้ว' : (item.aiStatus || 'รอผล AI');
+      $('verifiedBadge').classList.toggle('pending', item.source !== 'backend_phase2' && !item.saved);
+      $('productTitle').textContent = catLabel;
+      $('productMeta').textContent = `${item.color} · ${item.brand}`;
+      $('conditionText').textContent = conditionLabel;
+      $('confidenceText').textContent = item.agentCount ? `ความมั่นใจ ${item.confidence}% · ${item.agentCount} agents` : `ความมั่นใจ ${item.confidence}%`;
+
+      $('category').innerHTML = optionList(Object.entries(categoryBase).map(([value, v]) => ({ value, label: v.label })), item.category);
+      $('brand').innerHTML = optionList(brands, item.brand);
+      $('size').innerHTML = optionList(sizes, item.size);
+      $('condition').innerHTML = optionList(conditions, item.condition);
+      $('defect').innerHTML = optionList(defects, item.defect);
+      $('height').value = item.height || '';
+      $('weight').value = item.weight || '';
+      renderMeasurements(item);
+
+      $('recommendedPrice').textContent = fmt(price.recommended);
+      $('marketRange').textContent = item.marketFound
+        ? `ช่วงราคาจากตลาด/consensus ${fmt(price.fast)} – ${fmt(price.high)}`
+        : `ช่วงราคาตลาด ${fmt(price.fast)} – ${fmt(price.high)}`;
+      $('pricingSourceBadge').textContent = item.source === 'backend_phase2'
+        ? (item.agentCount >= 3 ? `AI ${item.agentCount} ตัวยืนยัน` : `AI consensus (${item.agentCount || 1} provider)`)
+        : item.source === 'backend_phase1'
+          ? 'AI vision + rules'
+          : 'Demo fallback';
+      $('pricingSourceBadge').classList.toggle('pending', item.source !== 'backend_phase2');
+      $('gaugeScore').textContent = price.score;
+      $('gaugeArc').setAttribute('stroke', sell.color);
+      $('gaugeScore').setAttribute('fill', sell.color);
+      $('gaugeArc').setAttribute('stroke-dashoffset', String(138 - (138 * price.score / 100)));
+      $('sellLabel').textContent = sell.label;
+      $('sellLabel').style.color = sell.color;
+      $('sellDays').textContent = `คาดขายออกใน ${sell.days}`;
+      $('captionBox').textContent = `${catLabel} ${item.brand} ไซซ์ ${item.size}\nสภาพ: ${conditionLabel} | ตำหนิ: ${defectLabel}\n\nราคาแนะนำ ${fmt(price.recommended)}\nรับไว/ขายเร็ว ${fmt(price.fast)} | ตั้งเผื่อต่อ ${fmt(price.high)}\n\nเหมาะสำหรับคนที่ต้องการของมือสองสภาพดีในราคาคุ้มค่า พร้อมส่ง/นัดรับได้ตามตกลง\n#เสื้อผ้ามือสอง #แฟชั่นมือสอง #AIประเมินราคา`;
+      $('captionBox').classList.toggle('show', captionVisible);
+      $('saveBtn').textContent = item.saved ? 'บันทึกแล้ว' : 'บันทึกเข้าตู้';
+      renderHistory();
+    }
+
+    function renderMeasurements(item) {
+      const parts = [];
+      if (needsWaistHip(item.category)) {
+        parts.push(`<div><label for="waist">เอว (นิ้ว)</label><input id="waist" type="number" placeholder="26" value="${item.waist || ''}"></div>`);
+        parts.push(`<div><label for="hip">สะโพก (นิ้ว)</label><input id="hip" type="number" placeholder="36" value="${item.hip || ''}"></div>`);
+      }
+      if (needsBustShoulder(item.category)) {
+        parts.push(`<div><label for="bust">อก (นิ้ว)</label><input id="bust" type="number" placeholder="34" value="${item.bust || ''}"></div>`);
+        parts.push(`<div><label for="shoulder">ไหล่ (นิ้ว)</label><input id="shoulder" type="number" placeholder="15" value="${item.shoulder || ''}"></div>`);
+      }
+      $('bodyMeasure').innerHTML = parts.join('');
+    }
+
+    function updateActive(field, value) {
+      results[activeIndex][field] = value;
+      if (['category','brand','condition','defect'].includes(field)) {
+        results[activeIndex].priceOverride = null;
+        results[activeIndex].source = 'manual_adjusted';
+        results[activeIndex].aiStatus = 'แก้ไขด้วยผู้ใช้';
+      }
+      renderResult();
+    }
+
+    function renderHistory() {
+      const rows = JSON.parse(localStorage.getItem('fashionPricingWardrobe') || '[]').slice(0, 5);
+      $('historyBox').classList.toggle('show', rows.length > 0);
+      $('historyBox').innerHTML = rows.map(r => `<div class="history-row"><span>${r.item}</span><strong>฿${r.price}</strong></div>`).join('');
+    }
+
+    document.addEventListener('change', (event) => {
+      const target = event.target;
+      if (target.matches('input[type=file][data-item]')) {
+        const itemId = Number(target.dataset.item);
+        const slot = Number(target.dataset.slot);
+        const file = target.files && target.files[0];
+        if (!file) return;
+        const item = scanItems.find(i => i.id === itemId);
+        if (item && item.slots[slot]?.url) URL.revokeObjectURL(item.slots[slot].url);
+        if (item) item.slots[slot] = { url: URL.createObjectURL(file), file };
+        renderScanList();
+      }
+      if (target.id === 'category') updateActive('category', target.value);
+      if (target.id === 'brand') updateActive('brand', target.value);
+      if (target.id === 'size') updateActive('size', target.value);
+      if (target.id === 'condition') updateActive('condition', target.value);
+      if (target.id === 'defect') updateActive('defect', target.value);
+    });
+
+    document.addEventListener('input', (event) => {
+      const target = event.target;
+      const fields = ['height','weight','waist','hip','bust','shoulder'];
+      if (fields.includes(target.id)) results[activeIndex][target.id] = target.value;
+    });
+
+    document.addEventListener('click', async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.removeItem) {
+        scanItems = scanItems.filter(i => i.id !== Number(target.dataset.removeItem));
+        renderScanList();
+      }
+      if (target.dataset.removeImage) {
+        event.preventDefault();
+        const [itemId, slot] = target.dataset.removeImage.split(':').map(Number);
+        const item = scanItems.find(i => i.id === itemId);
+        if (item && item.slots[slot]?.url) { URL.revokeObjectURL(item.slots[slot].url); item.slots[slot] = null; }
+        renderScanList();
+      }
+      if (target.dataset.goto) { activeIndex = Number(target.dataset.goto); captionVisible = false; renderResult(); }
+    });
+
+    $('addItemBtn').addEventListener('click', () => {
+      if (scanItems.length >= MAX_ITEMS) return;
+      scanItems.push({ id: nextId++, slots: [null, null, null] });
+      renderScanList();
+    });
+    $('analyzeBtn').addEventListener('click', async () => {
+      if (analyzing) return;
+      const withImages = scanItems.filter(item => item.slots.some(Boolean));
+      results = withImages.map((item, idx) => ({ ...detectDefaults(idx), id: item.id, image: item.slots.find(Boolean)?.url, size: 'M', height: '', weight: '', waist: '', hip: '', bust: '', shoulder: '', saved: false, source: backendBaseUrl ? 'pending_backend' : 'fallback', aiStatus: backendBaseUrl ? 'กำลังวิเคราะห์ AI' : 'Demo fallback', marketFound: false }));
+      activeIndex = 0; captionVisible = false; showResults();
+      if (!backendBaseUrl) { setAnalysisStatus('ยังไม่ได้ตั้งค่า backend จึงใช้ demo fallback ซึ่งความแม่นยำต่ำกว่าระบบจริง'); return; }
+      analyzing = true;
+      $('analyzeBtn').textContent = 'กำลังวิเคราะห์...';
+      try { await callBackend(withImages); }
+      catch (err) {
+        console.error(err);
+        results.forEach((item) => { if (item.source === 'pending_backend') { item.source = 'fallback'; item.aiStatus = 'Demo fallback'; } });
+        renderResult();
+        setAnalysisStatus(`เชื่อม backend ไม่สำเร็จ จึงใช้ demo fallback: ${err.message || err}`);
+      } finally {
+        analyzing = false;
+        $('analyzeBtn').textContent = 'วิเคราะห์ราคา';
+      }
+    });
+    $('closeBtn').addEventListener('click', () => { $('resultScreen').classList.add('hidden'); $('uploadScreen').classList.remove('hidden'); });
+    $('prevBtn').addEventListener('click', () => { activeIndex = Math.max(0, activeIndex - 1); captionVisible = false; renderResult(); });
+    $('nextBtn').addEventListener('click', () => { activeIndex = Math.min(results.length - 1, activeIndex + 1); captionVisible = false; renderResult(); });
+    $('rescanBtn').addEventListener('click', () => { const defaults = detectDefaults(activeIndex + 1); Object.assign(results[activeIndex], defaults); captionVisible = false; renderResult(); });
+    $('saveBtn').addEventListener('click', () => {
+      const item = results[activeIndex]; const price = item.priceOverride || calculate(item); const catLabel = categoryBase[item.category].label;
+      item.saved = true;
+      const rows = JSON.parse(localStorage.getItem('fashionPricingWardrobe') || '[]');
+      rows.unshift({ time: new Date().toLocaleString('th-TH'), item: `${catLabel} ${item.brand}`, price: price.recommended, score: price.score });
+      localStorage.setItem('fashionPricingWardrobe', JSON.stringify(rows.slice(0, 20)));
+      renderResult();
+    });
+    $('copyBtn').addEventListener('click', async () => {
+      captionVisible = true; renderResult();
+      try { await navigator.clipboard.writeText($('captionBox').textContent); $('copyBtn').textContent = 'คัดลอกแล้ว'; setTimeout(() => $('copyBtn').textContent = 'แสดง/คัดลอกแคปชันโพสต์ขาย', 1400); } catch { $('copyBtn').textContent = 'แสดงแคปชันโพสต์ขาย'; }
+    });
+    $('wardrobeBtn').addEventListener('click', () => { renderHistory(); const box = $('historyBox'); if (results.length) box.classList.toggle('show'); else alert('ตู้เสื้อผ้าจะแสดงหลังบันทึกผลประเมินอย่างน้อย 1 รายการ'); });
+    $('backendConfigBtn').addEventListener('click', async () => {
+      const current = backendBaseUrl || '';
+      const input = prompt('ใส่ Backend URL ที่ deploy server แล้ว เช่น https://your-backend.example.com หรือปล่อยว่างเพื่อลบ', current);
+      if (input === null) return;
+      backendBaseUrl = input.trim().replace(/\/$/, '');
+      if (backendBaseUrl) localStorage.setItem('fashionPricingBackendUrl', backendBaseUrl);
+      else localStorage.removeItem('fashionPricingBackendUrl');
+      await checkBackend();
+    });
+
+    renderScanList();
+    checkBackend();
+  </script>
+</body>
+</html>

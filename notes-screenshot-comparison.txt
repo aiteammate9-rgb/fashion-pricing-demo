@@ -1,0 +1,19 @@
+Screenshot vs Reference Comparison
+====================================
+
+Screen 1 looks very close to the reference:
+- "AI PRICING" header ✓
+- "สแกนเสื้อผ้าเพื่อขาย" title ✓
+- 3 upload slots with dashed borders ✓
+- "AI วิเคราะห์จริงพร้อมใช้งาน" badge ✓
+- "วิเคราะห์ราคา" button (warm brown/taupe) ✓
+- X close button top-right ✓
+- Clean card layout centered on page ✓
+
+Minor differences from reference:
+- Upload slots could be slightly taller (3:4 ratio vs square in reference)
+- Button disabled state color is slightly lighter (acceptable)
+- Overall matches the design intent well
+
+TypeScript: No errors ✓
+Build: OK ✓

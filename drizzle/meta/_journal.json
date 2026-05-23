@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1778943965788,
+      "tag": "0000_perfect_shocker",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1779113068850,
+      "tag": "0001_majestic_venus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1779355705072,
+      "tag": "0002_curvy_madame_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1779436797606,
+      "tag": "0003_lame_dragon_lord",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1779528232741,
+      "tag": "0004_concerned_hedge_knight",
+      "breakpoints": true
+    }
+  ]
+}
