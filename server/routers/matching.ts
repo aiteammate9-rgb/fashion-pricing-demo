@@ -36,6 +36,9 @@ import {
 import { analyzeLuckyColors } from "../luckyColor";
 import { generateImage } from "../_core/imageGeneration";
 import { storagePut } from "../storage";
+import { pushToUser, outfitMessage } from "../_core/lineMessaging";
+
+const APP_LOOKBOOK_URL = "https://fashion-pricing-demo.onrender.com/lookbook";
 
 const FACE_SHAPES = ["oval", "round", "square", "heart", "oblong", "diamond"] as const;
 const SKIN_TONES = ["fair", "light", "medium", "tan", "deep"] as const;
@@ -463,6 +466,20 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
           .where(and(eq(wardrobe.userId, ctx.user.id), inArray(wardrobe.id, rejectedIds)));
       }
 
+      // Push the freshly-styled looks to the user's LINE (no-op if not configured).
+      void pushToUser(
+        ctx.user.id,
+        savedLooks.slice(0, 5).map((l: any) =>
+          outfitMessage({
+            title: l.title || "ลุคใหม่",
+            occasion: l.occasion,
+            imageUrl: l.tryOnImageUrl,
+            commentary: l.stylistCommentary,
+            appUrl: APP_LOOKBOOK_URL,
+          }),
+        ),
+      );
+
       return { looks: savedLooks };
     }),
 
@@ -799,6 +816,20 @@ ${occasion}
         const newId = Array.isArray(inserted) ? (inserted[0] as any)?.id : undefined;
         savedLooks.push({ id: newId, tryOnImageUrl, buyItems, ...look });
       }
+
+      // Push the cross-closet looks to the user's LINE (no-op if not configured).
+      void pushToUser(
+        ctx.user.id,
+        savedLooks.slice(0, 5).map((l: any) =>
+          outfitMessage({
+            title: l.title || "ลุคใหม่",
+            occasion: l.occasion,
+            imageUrl: l.tryOnImageUrl,
+            commentary: l.stylistCommentary,
+            appUrl: APP_LOOKBOOK_URL,
+          }),
+        ),
+      );
 
       return { looks: savedLooks };
     }),

@@ -15,6 +15,19 @@ import { and, desc, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { wardrobe, orders } from "../../drizzle/schema";
+import {
+  pushToUser,
+  sellerOrderMessage,
+  buyerReservedMessage,
+  buyerOrderMessage,
+} from "../_core/lineMessaging";
+
+function addDays(n: number): Date {
+  return new Date(Date.now() + n * 24 * 60 * 60 * 1000);
+}
+function itemLabel(it: { brand?: string | null; category?: string | null }): string {
+  return [it.brand, it.category].filter(Boolean).join(" ").trim() || "สินค้า";
+}
 
 async function requireDb() {
   const db = await getDb();
@@ -86,6 +99,21 @@ export const ordersRouter = router({
         .$returningId();
 
       const newId = Array.isArray(inserted) ? (inserted[0] as any)?.id : undefined;
+
+      // Fire-and-forget LINE notifications (no-op if token/friendship missing).
+      const label = itemLabel(item);
+      void pushToUser(item.userId, [
+        sellerOrderMessage({
+          itemName: label,
+          priceBaht: price,
+          imageUrl: item.imageUrl,
+          pickupDate: addDays(2),
+        }),
+      ]);
+      void pushToUser(ctx.user.id, [
+        buyerReservedMessage({ itemName: label, priceBaht: price, imageUrl: item.imageUrl }),
+      ]);
+
       return { success: true as const, orderId: newId, priceBaht: price };
     }),
 
@@ -152,6 +180,23 @@ export const ordersRouter = router({
             salesChannel: "sheowa-crossuser",
           })
           .where(eq(wardrobe.id, order.itemId));
+
+        // Notify the buyer: confirmed + payment + delivery (no-op if LINE not set up).
+        const [it] = await db
+          .select()
+          .from(wardrobe)
+          .where(eq(wardrobe.id, order.itemId))
+          .limit(1);
+        void pushToUser(order.buyerUserId, [
+          buyerOrderMessage({
+            itemName: it ? itemLabel(it) : "สินค้า",
+            priceBaht: order.priceBaht,
+            imageUrl: it?.imageUrl ?? null,
+            deliveryDate: addDays(4),
+            paymentNote:
+              "ชำระเงินปลายทางกับไรเดอร์ หรือโอนตามรายละเอียดที่ผู้ขายแจ้งในแชต LINE",
+          }),
+        ]);
         return { success: true as const, status: "confirmed" as const };
       }
 

@@ -19,4 +19,7 @@ export const ENV = {
   lineChannelId: process.env.LINE_CHANNEL_ID ?? "",
   lineChannelSecret: process.env.LINE_CHANNEL_SECRET ?? "",
   lineCallbackUrl: process.env.LINE_CALLBACK_URL ?? "",
+  // LINE Messaging API (push flex cards / order notifications).
+  // Set LINE_MESSAGING_TOKEN in the environment (never commit it).
+  lineMessagingToken: process.env.LINE_MESSAGING_TOKEN ?? "",
 };
