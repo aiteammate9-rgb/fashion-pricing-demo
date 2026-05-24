@@ -34,6 +34,7 @@ import {
   type StyleProfile,
 } from "../../drizzle/schema";
 import { analyzeLuckyColors } from "../luckyColor";
+import { generateImage } from "../_core/imageGeneration";
 
 const FACE_SHAPES = ["oval", "round", "square", "heart", "oblong", "diamond"] as const;
 const SKIN_TONES = ["fair", "light", "medium", "tan", "deep"] as const;
@@ -360,6 +361,37 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
           })
           .where(and(eq(wardrobe.userId, ctx.user.id), inArray(wardrobe.id, selectedIds)));
 
+        // ── Try-on image (Gemini): editorial photo of a model wearing the selected
+        //    garments, using each garment's hosted (Cloudinary) image as reference.
+        //    Skips base64 items. Optional — failure must not block saving the look.
+        let tryOnImageUrl: string | null = null;
+        try {
+          const selItems = items.filter(i => selectedIds.includes(i.id));
+          const refs = selItems
+            .filter(i => i.imageUrl && /^https?:\/\//i.test(i.imageUrl))
+            .slice(0, 4)
+            .map(i => ({ url: i.imageUrl as string, mimeType: "image/jpeg" }));
+          if (refs.length > 0) {
+            const attrs: string[] = [];
+            if (profile?.skinTone) attrs.push(`${profile.skinTone} skin tone`);
+            if (profile?.undertone) attrs.push(`${profile.undertone} undertone`);
+            const subject = attrs.length
+              ? `a tasteful editorial fashion model with ${attrs.join(", ")}`
+              : "a tasteful editorial fashion model";
+            const palette = Array.isArray(look.colorPalette)
+              ? look.colorPalette.map((c: any) => c.hex).filter(Boolean).join(", ")
+              : "";
+            const garmentLine = selItems
+              .map(i => `${i.category}${i.color ? ` (${i.color})` : ""}`)
+              .join("; ");
+            const prompt = `Photorealistic head-to-toe editorial fashion photograph of ${subject}, actually WEARING the exact garments provided as reference images (reproduce each garment's real silhouette, fabric, color and details — not a generic stand-in): ${garmentLine}. The garments must look truly worn — correct draping, natural shadows, realistic fit — not floating or pasted on.${palette ? ` Color palette: ${palette}.` : ""} Soft natural studio light, neutral cream backdrop, magazine-quality composition. You may add minimal taste-level footwear/accessories in the same palette only to complete the look; the wardrobe garments remain the focus. Full-body shot.`;
+            const gen = await generateImage({ prompt, originalImages: refs });
+            tryOnImageUrl = gen.url ?? null;
+          }
+        } catch (e) {
+          console.warn("[matching] try-on image failed:", (e as Error)?.message ?? e);
+        }
+
         const inserted = await db
           .insert(outfitRecommendations)
           .values({
@@ -369,12 +401,13 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
             itemIds: selectedIds,
             analysis: look,
             luckyColors: luckyColor ?? null,
+            tryOnImageUrl,
             source: "own",
           })
           .$returningId();
 
         const newId = Array.isArray(inserted) ? (inserted[0] as any)?.id : undefined;
-        savedLooks.push({ id: newId, matchingGroup: groupLabel, ...look });
+        savedLooks.push({ id: newId, matchingGroup: groupLabel, tryOnImageUrl, ...look });
       }
 
       // Items rejected in EVERY look (and never used) → no_pair.
