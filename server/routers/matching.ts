@@ -35,6 +35,7 @@ import {
 } from "../../drizzle/schema";
 import { analyzeLuckyColors } from "../luckyColor";
 import { generateImage } from "../_core/imageGeneration";
+import { storagePut } from "../storage";
 
 const FACE_SHAPES = ["oval", "round", "square", "heart", "oblong", "diamond"] as const;
 const SKIN_TONES = ["fair", "light", "medium", "tan", "deep"] as const;
@@ -81,10 +82,35 @@ export const profileRouter = router({
           .nullable(),
         preferredStyles: z.string().max(500).optional().nullable(),
         notes: z.string().max(2000).optional().nullable(),
+        heightCm: z.number().int().min(80).max(250).optional().nullable(),
+        weightKg: z.number().int().min(20).max(300).optional().nullable(),
+        // Face photo: pass a base64 payload to upload (→ Cloudinary → profilePhotoUrl)
+        profilePhotoBase64: z.string().optional(),
+        profilePhotoMimeType: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const db = await requireDb();
+      const { profilePhotoBase64, profilePhotoMimeType, ...dbFields } = input;
+
+      // Upload the face photo to Cloudinary if a new one was provided.
+      const photoSet: { profilePhotoUrl?: string } = {};
+      if (profilePhotoBase64) {
+        try {
+          const mt = profilePhotoMimeType || "image/jpeg";
+          const ext = mt.includes("png") ? "png" : "jpg";
+          const buffer = Buffer.from(profilePhotoBase64, "base64");
+          const { url } = await storagePut(
+            `profiles/${ctx.user.id}/face.${ext}`,
+            buffer,
+            mt,
+          );
+          photoSet.profilePhotoUrl = url;
+        } catch (e) {
+          console.warn("[profile] face photo upload failed:", (e as Error)?.message ?? e);
+        }
+      }
+
       const existing = await db
         .select()
         .from(styleProfiles)
@@ -94,10 +120,12 @@ export const profileRouter = router({
       if (existing[0]) {
         await db
           .update(styleProfiles)
-          .set({ ...input })
+          .set({ ...dbFields, ...photoSet })
           .where(eq(styleProfiles.userId, ctx.user.id));
       } else {
-        await db.insert(styleProfiles).values({ userId: ctx.user.id, ...input });
+        await db
+          .insert(styleProfiles)
+          .values({ userId: ctx.user.id, ...dbFields, ...photoSet });
       }
       return loadProfile(ctx.user.id);
     }),
@@ -367,24 +395,38 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
         let tryOnImageUrl: string | null = null;
         try {
           const selItems = items.filter(i => selectedIds.includes(i.id));
-          const refs = selItems
+          // If the user uploaded a face photo, use it as the FIRST reference so the
+          // model in the try-on looks like them.
+          const faceUrl =
+            profile?.profilePhotoUrl && /^https?:\/\//i.test(profile.profilePhotoUrl)
+              ? profile.profilePhotoUrl
+              : null;
+          const garmentRefs = selItems
             .filter(i => i.imageUrl && /^https?:\/\//i.test(i.imageUrl))
-            .slice(0, 4)
+            .slice(0, faceUrl ? 3 : 4)
             .map(i => ({ url: i.imageUrl as string, mimeType: "image/jpeg" }));
-          if (refs.length > 0) {
+          const refs = faceUrl
+            ? [{ url: faceUrl, mimeType: "image/jpeg" }, ...garmentRefs]
+            : garmentRefs;
+          if (garmentRefs.length > 0) {
             const attrs: string[] = [];
             if (profile?.skinTone) attrs.push(`${profile.skinTone} skin tone`);
             if (profile?.undertone) attrs.push(`${profile.undertone} undertone`);
-            const subject = attrs.length
-              ? `a tasteful editorial fashion model with ${attrs.join(", ")}`
-              : "a tasteful editorial fashion model";
+            const subject = faceUrl
+              ? "the EXACT person shown in the first reference image (preserve their face, hair and likeness faithfully)"
+              : attrs.length
+                ? `a tasteful editorial fashion model with ${attrs.join(", ")}`
+                : "a tasteful editorial fashion model";
             const palette = Array.isArray(look.colorPalette)
               ? look.colorPalette.map((c: any) => c.hex).filter(Boolean).join(", ")
               : "";
             const garmentLine = selItems
               .map(i => `${i.category}${i.color ? ` (${i.color})` : ""}`)
               .join("; ");
-            const prompt = `Photorealistic head-to-toe editorial fashion photograph of ${subject}, actually WEARING the exact garments provided as reference images (reproduce each garment's real silhouette, fabric, color and details — not a generic stand-in): ${garmentLine}. The garments must look truly worn — correct draping, natural shadows, realistic fit — not floating or pasted on.${palette ? ` Color palette: ${palette}.` : ""} Soft natural studio light, neutral cream backdrop, magazine-quality composition. You may add minimal taste-level footwear/accessories in the same palette only to complete the look; the wardrobe garments remain the focus. Full-body shot.`;
+            const faceNote = faceUrl
+              ? " The FIRST reference image is the person's face — render THIS person, keeping their facial identity recognisable; the remaining reference images are the garments."
+              : "";
+            const prompt = `Photorealistic head-to-toe editorial fashion photograph of ${subject}, actually WEARING the exact garments provided as reference images (reproduce each garment's real silhouette, fabric, color and details — not a generic stand-in): ${garmentLine}.${faceNote} The garments must look truly worn — correct draping, natural shadows, realistic fit — not floating or pasted on.${palette ? ` Color palette: ${palette}.` : ""} Soft natural studio light, neutral cream backdrop, magazine-quality composition. You may add minimal taste-level footwear/accessories in the same palette only to complete the look; the wardrobe garments remain the focus. Full-body shot.`;
             const gen = await generateImage({ prompt, originalImages: refs });
             tryOnImageUrl = gen.url ?? null;
           }
@@ -697,19 +739,28 @@ ${occasion}
         // Try-on image from selected garments' hosted photos (skip base64).
         let tryOnImageUrl: string | null = null;
         try {
-          const refs = selectedIds
+          const faceUrl =
+            profile?.profilePhotoUrl && /^https?:\/\//i.test(profile.profilePhotoUrl)
+              ? profile.profilePhotoUrl
+              : null;
+          const garmentRefs = selectedIds
             .map(id => itemById.get(id))
             .filter((i): i is (typeof itemsForLLM)[number] => !!i)
             .filter(i => i.imageUrl && /^https?:\/\//i.test(i.imageUrl))
-            .slice(0, 4)
+            .slice(0, faceUrl ? 3 : 4)
             .map(i => ({ url: i.imageUrl as string, mimeType: "image/jpeg" }));
-          if (refs.length > 0) {
+          const refs = faceUrl
+            ? [{ url: faceUrl, mimeType: "image/jpeg" }, ...garmentRefs]
+            : garmentRefs;
+          if (garmentRefs.length > 0) {
             const attrs: string[] = [];
             if (profile?.skinTone) attrs.push(`${profile.skinTone} skin tone`);
             if (profile?.undertone) attrs.push(`${profile.undertone} undertone`);
-            const subject = attrs.length
-              ? `a tasteful editorial fashion model with ${attrs.join(", ")}`
-              : "a tasteful editorial fashion model";
+            const subject = faceUrl
+              ? "the EXACT person shown in the first reference image (preserve their face, hair and likeness faithfully)"
+              : attrs.length
+                ? `a tasteful editorial fashion model with ${attrs.join(", ")}`
+                : "a tasteful editorial fashion model";
             const palette = Array.isArray(look.colorPalette)
               ? look.colorPalette.map((c: any) => c.hex).filter(Boolean).join(", ")
               : "";
@@ -718,7 +769,10 @@ ${occasion}
               .filter(Boolean)
               .map(i => `${i!.category}${i!.color ? ` (${i!.color})` : ""}`)
               .join("; ");
-            const prompt = `Photorealistic head-to-toe editorial fashion photograph of ${subject}, actually WEARING the exact garments provided as reference images (reproduce each garment's real silhouette, fabric, color and details): ${garmentLine}. Garments must look truly worn — correct draping, natural shadows, realistic fit.${palette ? ` Color palette: ${palette}.` : ""} Soft natural studio light, neutral cream backdrop, magazine-quality composition. Full-body shot.`;
+            const faceNote = faceUrl
+              ? " The FIRST reference image is the person's face — render THIS person, keeping their facial identity recognisable; the remaining reference images are the garments."
+              : "";
+            const prompt = `Photorealistic head-to-toe editorial fashion photograph of ${subject}, actually WEARING the exact garments provided as reference images (reproduce each garment's real silhouette, fabric, color and details): ${garmentLine}.${faceNote} Garments must look truly worn — correct draping, natural shadows, realistic fit.${palette ? ` Color palette: ${palette}.` : ""} Soft natural studio light, neutral cream backdrop, magazine-quality composition. Full-body shot.`;
             const gen = await generateImage({ prompt, originalImages: refs });
             tryOnImageUrl = gen.url ?? null;
           }

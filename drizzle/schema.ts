@@ -150,7 +150,9 @@ export const styleProfiles = mysqlTable("style_profiles", {
   birthDate: varchar("birthDate", { length: 16 }), // ISO yyyy-mm-dd — feeds analyzeLuckyColors()
   preferredStyles: text("preferredStyles"), // comma separated tags
   notes: text("notes"),
-  profilePhotoUrl: varchar("profilePhotoUrl", { length: 500 }),
+  heightCm: int("heightCm"), // personal default height (used by try-on body proportions)
+  weightKg: int("weightKg"), // personal default weight
+  profilePhotoUrl: varchar("profilePhotoUrl", { length: 500 }), // user's face photo → try-on reference
   profilePhotoKey: varchar("profilePhotoKey", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

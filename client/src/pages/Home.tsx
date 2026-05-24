@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus, Check, ChevronLeft, ChevronRight, Shirt, Loader2, Sparkles, RotateCcw } from "lucide-react";
+import { X, Plus, Check, ChevronLeft, ChevronRight, Shirt, Loader2, Sparkles, RotateCcw, UserCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import GaugeMeter from "@/components/GaugeMeter";
@@ -765,6 +765,12 @@ export default function Home() {
           <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
             <Shirt className="w-3.5 h-3.5" />
             ตู้เสื้อผ้า
+          </Button>
+        </Link>
+        <Link href="/profile">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
+            <UserCircle className="w-3.5 h-3.5" />
+            โปรไฟล์
           </Button>
         </Link>
       </div>
