@@ -175,7 +175,7 @@ export default function LookbookPage() {
               </Button>
             </div>
             <p className="text-xs text-gray-400">
-              ต้องมีเสื้อผ้าอย่างน้อย 2 ชิ้นในตู้ และตั้งค่า OPENAI_API_KEY (หรือ Manus key) แล้ว
+              ต้องมีเสื้อผ้าอย่างน้อย 2 ชิ้นในตู้ + ตั้งค่า OPENAI_API_KEY (จัดลุค) และ GOOGLE_AI_API_KEY (รูป try-on)
             </p>
           </CardContent>
         </Card>
@@ -218,6 +218,15 @@ export default function LookbookPage() {
                             <Trash2 className="w-4 h-4 text-gray-400" />
                           </Button>
                         </div>
+
+                        {o.tryOnImageUrl && (
+                          <img
+                            src={o.tryOnImageUrl}
+                            alt={o.title}
+                            loading="lazy"
+                            className="w-full rounded-lg mt-3 border border-black/5"
+                          />
+                        )}
 
                         {look.stylistCommentary && (
                           <p className="text-sm text-gray-700 mt-2 leading-relaxed">
