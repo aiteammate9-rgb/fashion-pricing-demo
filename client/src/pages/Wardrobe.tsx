@@ -10,6 +10,15 @@ import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -27,6 +36,7 @@ import {
   ArrowLeft,
   Filter,
   ScanLine,
+  Tag,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -37,6 +47,9 @@ export default function WardrobePage() {
   const { user, loading: authLoading } = useAuth();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  // List-for-sale dialog state
+  const [listingItem, setListingItem] = useState<any | null>(null);
+  const [listPrice, setListPrice] = useState<string>("");
 
   const { data, isLoading, refetch } = trpc.wardrobe.list.useQuery(
     { limit: 100, offset: 0, category: filterCategory === "all" ? undefined : filterCategory },
@@ -61,6 +74,30 @@ export default function WardrobePage() {
   const handleDelete = (id: number) => {
     setDeletingId(id);
     deleteMutation.mutate({ id });
+  };
+
+  const listMutation = trpc.wardrobe.markAsListed.useMutation({
+    onSuccess: () => {
+      toast.success("ลงขายแล้ว — ชิ้นนี้จะไปโผล่ในการจับคู่ข้ามตู้ของคนอื่น");
+      setListingItem(null);
+      setListPrice("");
+      refetch();
+    },
+    onError: (err) => toast.error(`ลงขายไม่สำเร็จ: ${err.message}`),
+  });
+
+  const openListDialog = (item: any) => {
+    setListingItem(item);
+    setListPrice(String(item.listedPrice ?? item.recommendedPrice ?? ""));
+  };
+
+  const confirmList = () => {
+    const price = Math.round(Number(listPrice));
+    if (!listingItem || !Number.isFinite(price) || price <= 0) {
+      toast.error("กรุณาใส่ราคาที่ถูกต้อง");
+      return;
+    }
+    listMutation.mutate({ id: listingItem.id, listedPrice: price, salesChannel: "sheowa" });
   };
 
   // Get category label helper
@@ -237,6 +274,12 @@ export default function WardrobePage() {
                               ขายง่าย
                             </Badge>
                           )}
+                          {item.status === "listed" && (
+                            <Badge className="text-[9px] px-1.5 py-0 bg-emerald-600/90 text-white border-0">
+                              <Tag className="w-2.5 h-2.5 mr-0.5" />
+                              กำลังขาย
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Delete button */}
@@ -285,6 +328,18 @@ export default function WardrobePage() {
                             })}
                           </span>
                         </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={item.status === "listed" ? "secondary" : "outline"}
+                          className="w-full h-7 mt-1 text-[11px] gap-1"
+                          onClick={() => openListDialog(item)}
+                        >
+                          <Tag className="w-3 h-3" />
+                          {item.status === "listed"
+                            ? `กำลังขาย ฿${(item.listedPrice ?? 0).toLocaleString()}`
+                            : "ลงขาย"}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -294,6 +349,59 @@ export default function WardrobePage() {
           </div>
         )}
       </main>
+
+      {/* List-for-sale dialog */}
+      <Dialog open={!!listingItem} onOpenChange={(o) => !o && setListingItem(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Tag className="w-4 h-4 text-emerald-600" />
+              ลงขายเสื้อผ้า
+            </DialogTitle>
+          </DialogHeader>
+          {listingItem && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {listingItem.brand || "No Brand"} · {getCategoryLabel(listingItem.category)}
+              </p>
+              <div className="space-y-1.5">
+                <Label htmlFor="listPrice" className="text-xs">
+                  ราคาขาย (บาท)
+                </Label>
+                <Input
+                  id="listPrice"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={listPrice}
+                  onChange={(e) => setListPrice(e.target.value)}
+                  placeholder="เช่น 350"
+                />
+                {listingItem.recommendedPrice && (
+                  <p className="text-[11px] text-muted-foreground">
+                    AI แนะนำ: ฿{listingItem.recommendedPrice.toLocaleString()}
+                  </p>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                เมื่อลงขาย ชิ้นนี้จะปรากฏให้ผู้ใช้คนอื่นเห็นใน "จับคู่ข้ามตู้" และซื้อได้
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setListingItem(null)}>
+              ยกเลิก
+            </Button>
+            <Button
+              className="bg-teal-600 hover:bg-teal-700"
+              disabled={listMutation.isPending}
+              onClick={confirmList}
+            >
+              {listMutation.isPending ? "กำลังลงขาย..." : "ยืนยันลงขาย"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -100,7 +100,7 @@ export default function LookbookPage() {
   const savedBirthDate = profile.data?.birthDate ?? "";
 
   return (
-    <div className="min-h-screen bg-[#f7f4ef] px-4 py-8">
+    <div className="min-h-screen bg-background px-4 py-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
