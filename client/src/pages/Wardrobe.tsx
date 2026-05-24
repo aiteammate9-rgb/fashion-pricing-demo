@@ -37,6 +37,7 @@ import {
   Filter,
   ScanLine,
   Tag,
+  RotateCw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -308,11 +309,31 @@ export default function WardrobePage() {
                       {/* Image */}
                       <div className="aspect-[3/4] relative bg-warm-100">
                         {item.imageUrl ? (
-                          <img
-                            src={item.imageUrl}
-                            alt={item.brand}
-                            className="w-full h-full object-cover"
-                          />
+                          <>
+                            {/* Front image (default) */}
+                            <img
+                              src={item.imageUrl}
+                              alt={item.brand}
+                              className={`w-full h-full object-cover absolute inset-0 transition-opacity duration-300 ${
+                                item.imageUrl2 ? "group-hover:opacity-0" : ""
+                              }`}
+                            />
+                            {/* Back image — fades in on hover */}
+                            {item.imageUrl2 && (
+                              <img
+                                src={item.imageUrl2}
+                                alt={`${item.brand} (หลัง)`}
+                                loading="lazy"
+                                className="w-full h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                              />
+                            )}
+                            {item.imageUrl2 && (
+                              <Badge className="absolute bottom-2 left-2 z-10 text-[9px] px-1.5 py-0 bg-black/55 text-white border-0">
+                                <RotateCw className="w-2.5 h-2.5 mr-0.5" />
+                                หน้า · หลัง
+                              </Badge>
+                            )}
+                          </>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Shirt className="w-10 h-10 text-warm-200" />
@@ -320,7 +341,7 @@ export default function WardrobePage() {
                         )}
 
                         {/* Overlay badges */}
-                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                           <Badge className="text-[9px] px-1.5 py-0 bg-white/90 text-foreground border-0 shadow-sm">
                             {getCategoryLabel(item.category)}
                           </Badge>
@@ -353,14 +374,14 @@ export default function WardrobePage() {
                           type="button"
                           onClick={() => handleDelete(item.id)}
                           disabled={deletingId === item.id}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                          className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
                         >
                           <Trash2 className="w-3 h-3 text-red-500" />
                         </button>
 
                         {/* Price tag */}
                         {item.recommendedPrice && (
-                          <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
+                          <div className="absolute bottom-2 right-2 z-10 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
                             <p className="text-xs font-bold font-mono" style={{ color: "#a08b7a" }}>
                               ฿{item.recommendedPrice.toLocaleString()}
                             </p>

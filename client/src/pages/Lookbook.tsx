@@ -15,6 +15,12 @@ import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -43,6 +49,7 @@ export default function LookbookPage() {
   const [maxLooks, setMaxLooks] = useState(3);
   const [occasion, setOccasion] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [selectedOutfit, setSelectedOutfit] = useState<any | null>(null);
 
   const profile = trpc.profile.me.useQuery(undefined, { enabled: !!user });
   const outfits = trpc.outfits.list.useQuery(undefined, { enabled: !!user });
@@ -234,138 +241,180 @@ export default function LookbookPage() {
         ) : !outfits.data || outfits.data.length === 0 ? (
           <p className="text-sm text-gray-400">ยังไม่มีลุค — กด "ให้ AI จัดลุค" ด้านบน</p>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <AnimatePresence>
               {outfits.data.map(o => {
-                const look: any = o.analysis ?? {};
-                const lucky: any = o.luckyColors ?? null;
                 const itemIds: number[] = Array.isArray(o.itemIds) ? (o.itemIds as number[]) : [];
                 return (
-                  <motion.div
+                  <motion.button
                     key={o.id}
+                    type="button"
+                    onClick={() => setSelectedOutfit(o)}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
+                    className="text-left group"
                   >
-                    <Card>
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-gray-800">{o.title}</p>
-                            {o.occasion && (
-                              <p className="text-xs text-gray-500">{o.occasion}</p>
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={deleteOutfit.isPending}
-                            onClick={() => deleteOutfit.mutate({ id: o.id })}
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400" />
-                          </Button>
-                        </div>
-
-                        {o.tryOnImageUrl && (
-                          <img
-                            src={o.tryOnImageUrl}
-                            alt={o.title}
-                            loading="lazy"
-                            className="w-full rounded-lg mt-3 border border-black/5"
-                          />
-                        )}
-
-                        {look.stylistCommentary && (
-                          <p className="text-sm text-gray-700 mt-2 leading-relaxed">
-                            {look.stylistCommentary}
-                          </p>
-                        )}
-
-                        <ColorSwatches palette={look.colorPalette || []} />
-
-                        {look.luckyColorNote && (
-                          <p className="text-xs text-amber-700 mt-3 bg-amber-50 rounded-md px-3 py-2">
-                            <Sparkles className="w-3 h-3 inline mr-1" />
-                            {look.luckyColorNote}
-                          </p>
-                        )}
-
-                        {Array.isArray(look.buyItems) && look.buyItems.length > 0 && (
-                          <div className="mt-3 border-t border-dashed border-gray-200 pt-3">
-                            <p className="text-xs font-medium text-gray-700 flex items-center gap-1 mb-2">
-                              <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
-                              ช้อปเพิ่มให้ลุคนี้สมบูรณ์
-                            </p>
-                            <div className="space-y-2">
-                              {look.buyItems.map((b: any) => (
-                                <div
-                                  key={b.id}
-                                  className="flex items-center gap-3 bg-emerald-50/60 rounded-md px-2 py-2"
-                                >
-                                  {b.imageUrl && /^https?:\/\//i.test(b.imageUrl) && (
-                                    <img
-                                      src={b.imageUrl}
-                                      alt={b.name}
-                                      loading="lazy"
-                                      className="w-12 h-12 rounded object-cover border border-black/5"
-                                    />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-800 truncate">{b.name}</p>
-                                    {b.color && (
-                                      <p className="text-[11px] text-gray-500">{b.color}</p>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    {b.priceBaht != null && (
-                                      <p className="text-sm font-semibold text-emerald-700">
-                                        ฿{Number(b.priceBaht).toLocaleString()}
-                                      </p>
-                                    )}
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-7 mt-1 text-xs"
-                                      disabled={placeOrder.isPending}
-                                      onClick={() =>
-                                        placeOrder.mutate({ itemId: b.id, outfitId: o.id })
-                                      }
-                                    >
-                                      {placeOrder.isPending ? "กำลังจอง..." : "สนใจซื้อ"}
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow border-border">
+                      <CardContent className="p-0">
+                        <div className="aspect-[3/4] bg-warm-100 relative">
+                          {o.tryOnImageUrl ? (
+                            <img
+                              src={o.tryOnImageUrl}
+                              alt={o.title}
+                              loading="lazy"
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Shirt className="w-10 h-10 text-warm-200" />
                             </div>
-                          </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          <Badge variant="secondary" className="text-xs">
-                            <Shirt className="w-3 h-3 mr-1" />
-                            {itemIds.length} ชิ้น
-                          </Badge>
+                          )}
                           {o.source === "cross_user" && (
-                            <Badge className="text-xs bg-emerald-600 hover:bg-emerald-600">
-                              <ShoppingBag className="w-3 h-3 mr-1" />
+                            <Badge className="absolute top-2 left-2 text-[9px] px-1.5 py-0 bg-emerald-600 text-white border-0">
+                              <ShoppingBag className="w-2.5 h-2.5 mr-0.5" />
                               ข้ามตู้
                             </Badge>
                           )}
-                          {lucky?.primary?.name && (
-                            <Badge variant="outline" className="text-xs">
-                              สีนำโชค: {lucky.primary.name}
-                            </Badge>
+                        </div>
+                        <div className="p-3">
+                          <p className="text-sm font-semibold text-foreground truncate">{o.title}</p>
+                          {o.occasion && (
+                            <p className="text-[11px] text-muted-foreground truncate">{o.occasion}</p>
                           )}
+                          <p className="text-[10px] text-muted-foreground mt-1">{itemIds.length} ชิ้น</p>
                         </div>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </motion.button>
                 );
               })}
             </AnimatePresence>
           </div>
         )}
       </div>
+
+      {/* Look detail */}
+      <Dialog open={!!selectedOutfit} onOpenChange={(o) => !o && setSelectedOutfit(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          {selectedOutfit && (() => {
+            const o = selectedOutfit;
+            const look: any = o.analysis ?? {};
+            const lucky: any = o.luckyColors ?? null;
+            const itemIds: number[] = Array.isArray(o.itemIds) ? (o.itemIds as number[]) : [];
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-base">{o.title}</DialogTitle>
+                  {o.occasion && (
+                    <p className="text-xs text-muted-foreground">{o.occasion}</p>
+                  )}
+                </DialogHeader>
+
+                {o.tryOnImageUrl && (
+                  <img
+                    src={o.tryOnImageUrl}
+                    alt={o.title}
+                    loading="lazy"
+                    className="w-full rounded-lg border border-black/5"
+                  />
+                )}
+
+                {look.stylistCommentary && (
+                  <p className="text-sm text-gray-700 leading-relaxed">{look.stylistCommentary}</p>
+                )}
+
+                <ColorSwatches palette={look.colorPalette || []} />
+
+                {look.luckyColorNote && (
+                  <p className="text-xs text-amber-700 bg-amber-50 rounded-md px-3 py-2">
+                    <Sparkles className="w-3 h-3 inline mr-1" />
+                    {look.luckyColorNote}
+                  </p>
+                )}
+
+                {Array.isArray(look.buyItems) && look.buyItems.length > 0 && (
+                  <div className="border-t border-dashed border-gray-200 pt-3">
+                    <p className="text-xs font-medium text-gray-700 flex items-center gap-1 mb-2">
+                      <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
+                      ช้อปเพิ่มให้ลุคนี้สมบูรณ์
+                    </p>
+                    <div className="space-y-2">
+                      {look.buyItems.map((b: any) => (
+                        <div
+                          key={b.id}
+                          className="flex items-center gap-3 bg-emerald-50/60 rounded-md px-2 py-2"
+                        >
+                          {b.imageUrl && /^https?:\/\//i.test(b.imageUrl) && (
+                            <img
+                              src={b.imageUrl}
+                              alt={b.name}
+                              loading="lazy"
+                              className="w-12 h-12 rounded object-cover border border-black/5"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-800 truncate">{b.name}</p>
+                            {b.color && <p className="text-[11px] text-gray-500">{b.color}</p>}
+                          </div>
+                          <div className="text-right">
+                            {b.priceBaht != null && (
+                              <p className="text-sm font-semibold text-emerald-700">
+                                ฿{Number(b.priceBaht).toLocaleString()}
+                              </p>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 mt-1 text-xs"
+                              disabled={placeOrder.isPending}
+                              onClick={() => placeOrder.mutate({ itemId: b.id, outfitId: o.id })}
+                            >
+                              {placeOrder.isPending ? "กำลังจอง..." : "สนใจซื้อ"}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Badge variant="secondary" className="text-xs">
+                    <Shirt className="w-3 h-3 mr-1" />
+                    {itemIds.length} ชิ้น
+                  </Badge>
+                  {o.source === "cross_user" && (
+                    <Badge className="text-xs bg-emerald-600 hover:bg-emerald-600">
+                      <ShoppingBag className="w-3 h-3 mr-1" />
+                      ข้ามตู้
+                    </Badge>
+                  )}
+                  {lucky?.primary?.name && (
+                    <Badge variant="outline" className="text-xs">
+                      สีนำโชค: {lucky.primary.name}
+                    </Badge>
+                  )}
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:text-red-600 mt-1"
+                  disabled={deleteOutfit.isPending}
+                  onClick={() => {
+                    deleteOutfit.mutate({ id: o.id });
+                    setSelectedOutfit(null);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  ลบลุคนี้
+                </Button>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
