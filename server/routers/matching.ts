@@ -23,7 +23,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, isNotNull } from "drizzle-orm";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
@@ -419,6 +419,331 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
           .update(wardrobe)
           .set({ matchingStatus: "no_pair" })
           .where(and(eq(wardrobe.userId, ctx.user.id), inArray(wardrobe.id, rejectedIds)));
+      }
+
+      return { looks: savedLooks };
+    }),
+
+  // ───────────────────── Cross-user (marketplace) match ─────────────────────
+  // Mixes the user's OWN wardrobe with items OTHER users have put up for sale
+  // (wardrobe.status = "listed", listedPrice set). The stylist composes looks
+  // that combine what the user already owns with at least one buyable piece, so
+  // each saved look carries a "shop this" CTA (analysis.buyItems).
+  crossUserMatch: protectedProcedure
+    .input(
+      z.object({
+        occasion: z.string().max(160).optional(),
+        notes: z.string().max(500).optional(),
+        maxLooks: z.number().int().min(1).max(3).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      const profile = await loadProfile(ctx.user.id);
+      const maxLooks = input.maxLooks ?? 2;
+
+      // Items the user already owns.
+      const ownItems = await db
+        .select()
+        .from(wardrobe)
+        .where(eq(wardrobe.userId, ctx.user.id));
+
+      // Items other users are selling.
+      const marketItems = await db
+        .select()
+        .from(wardrobe)
+        .where(
+          and(
+            ne(wardrobe.userId, ctx.user.id),
+            eq(wardrobe.status, "listed"),
+            isNotNull(wardrobe.listedPrice),
+          ),
+        )
+        .orderBy(desc(wardrobe.createdAt))
+        .limit(30);
+
+      if (marketItems.length === 0) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            "ยังไม่มีเสื้อผ้าจากตู้ของคนอื่นที่ลงขายอยู่ — กลับมาใหม่เมื่อมีคนลงขายเพิ่ม",
+        });
+      }
+      if (ownItems.length === 0 && marketItems.length < 2) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "เสื้อผ้าไม่พอสำหรับจัดลุค (ต้องมีอย่างน้อย 2 ชิ้นรวมกัน)",
+        });
+      }
+
+      const luckyColor = analyzeLuckyColors(profile?.birthDate ?? null);
+
+      const mapItem = (it: typeof wardrobe.$inferSelect, owned: boolean) => ({
+        id: it.id,
+        name:
+          [it.brand, it.category].filter(Boolean).join(" ").trim() || `item ${it.id}`,
+        category: it.category,
+        color: it.color,
+        tags: it.tags,
+        imageUrl: it.imageUrl,
+        owned,
+        priceBaht: owned ? null : it.listedPrice ?? null,
+      });
+
+      const ownForLLM = ownItems.slice(0, 14).map(it => mapItem(it, true));
+      const marketForLLM = marketItems.slice(0, 16).map(it => mapItem(it, false));
+      const itemsForLLM = [...ownForLLM, ...marketForLLM];
+      const buyableIds = new Set(marketForLLM.map(i => i.id));
+      const validIdSet = new Set(itemsForLLM.map(i => i.id));
+
+      const occasion = input.occasion?.trim() || "An elegant everyday occasion";
+
+      const systemPrompt = `You are a world-class fashion stylist and personal shopper with the editorial eye of Vogue and the discipline of Parisian couture and Japanese minimalism, operating under a strict Personal Color framework. You write all natural-language fields in Thai (ภาษาไทย). Hex codes remain #RRGGBB. Ids remain numeric.
+
+You are styling a SHOPPABLE look: the user already OWNS some garments, and OTHER people are SELLING others. Compose looks that pair what the user owns with pieces they could BUY to complete the outfit. Each look MUST include AT LEAST ONE buyable (owned=false) item — otherwise it is not a valid cross-closet look. Prefer looks where 1–2 affordable buyable pieces unlock the user's existing wardrobe.
+
+Each "look" must independently satisfy ALL iron rules below — no group discounts.
+
+=== IRON RULES (HARD CONSTRAINTS — NEVER BREAK) ===
+1. UNDERTONE FIRST. Use the user's undertone (cool/neutral/warm) as the primary reference; default neutral and say so if unknown.
+2. NO HARSH CLASH NEAR THE FACE. A garment clashing severely with the undertone is forbidden as top/dress/outerwear; it may only appear on bottoms when overall color theory still holds.
+3. SILHOUETTE BALANCE. Top and bottom must balance proportions.
+4. FABRIC HARMONY. Fabrics must support each other.
+5. LUCKY COLOR ACTIVELY CONSIDERED but NEVER overrides 1–4. Safest placement: bottom → outerwear → hero (only if undertone-safe). Document in luckyColorNote.
+6. REJECT FEARLESSLY into rejectedItemIds. A short clean look beats a stuffed one.
+7. EXPLAIN reasoning in Thai, concretely referencing the rules.
+
+VOICE FOR stylistCommentary — POWER & SOCIAL VALIDATION MODE: เขียนเหมือนบรรณาธิการแฟชั่นระดับ Vogue ทุกประโยคเฉียบคม ผูกเหตุผลเชิงเทคนิค (undertone/silhouette/fabric/color theory) ชี้ให้เห็นว่าชิ้นที่ "ควรซื้อเพิ่ม" ปลดล็อกตู้เสื้อผ้าเดิมอย่างไร ห้ามชมลอย ๆ ห้ามอ้างอำนาจเหนือธรรมชาติ
+
+The system handles GARMENTS ONLY (tops, bottoms, dresses, outerwear). rejectedItemIds is the UNION across ALL looks.`;
+
+      const userPrompt = `Build BETWEEN 1 AND ${maxLooks} distinct shoppable looks using ONLY the items below, in strict obedience to the IRON RULES. Each look's selection MUST be 2–4 items and MUST include at least one item with owned=false (a buyable piece).
+
+# Item pool
+Each item has "owned": true (already in the user's wardrobe) or false (for sale by another user, "priceBaht" = price in THB). Infer true category/color/fabric from the attached IMAGE; text fields may be empty.
+${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
+
+# User Profile
+- Face shape: ${profile?.faceShape ?? "(assume oval if unknown)"}
+- Skin tone: ${profile?.skinTone ?? "(unknown)"}
+- Undertone: ${profile?.undertone ?? "(unknown — assume neutral and note it)"}
+- Birth date: ${profile?.birthDate ?? "(not provided)"}
+- Preferred styles: ${profile?.preferredStyles ?? "(open)"}
+- Stylist notes from user: ${input.notes ?? "(none)"}
+
+# Lucky Color Guidance (integrate, guarded by iron rules)
+${luckyColor ? `- Born on a ${luckyColor.birthDayName} under ${luckyColor.zodiacSign}.
+- Primary lucky color: ${luckyColor.primary.name} (${luckyColor.primary.hex})
+- Supporting: ${luckyColor.supporting.map(c => `${c.name} (${c.hex})`).join(", ")}
+- AVOID as lead / face-adjacent: ${luckyColor.avoid.name}` : "Not available — proceed without lucky color emphasis and state so in luckyColorNote."}
+
+# Occasion
+${occasion}
+
+# Output rules
+- Return strict JSON only.
+- looks: 1..${maxLooks} entries; each has selectedItemIds (2–4, at least one buyable), outfitBreakdown, stylistCommentary, faceShapeNote, skinToneNote, luckyColorNote, colorPalette (3–5 real hex), stylingTips, title, occasion.
+- selectedItemIds MUST be ids from the pool above.
+- stylistCommentary: 4–5 ประโยคภาษาไทยทรงพลังสไตล์ Vogue editor's note, ระบุชัดว่าชิ้นที่ซื้อเพิ่มทำให้ลุคสมบูรณ์อย่างไร.
+- Every textual field in Thai (ภาษาไทย).`;
+
+      const userContent: Array<
+        | { type: "text"; text: string }
+        | { type: "image_url"; image_url: { url: string; detail?: "auto" | "low" | "high" } }
+      > = [{ type: "text", text: userPrompt }];
+
+      for (const it of itemsForLLM) {
+        if (!it.imageUrl || !/^https?:\/\//i.test(it.imageUrl)) continue;
+        userContent.push({ type: "text", text: `Photograph of item id=${it.id} (${it.owned ? "owned" : "for sale"}):` });
+        userContent.push({ type: "image_url", image_url: { url: it.imageUrl, detail: "low" } });
+      }
+
+      const llmResp = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "CrossUserOutfitSet",
+            strict: true,
+            schema: {
+              type: "object",
+              additionalProperties: false,
+              required: ["looks", "rejectedItemIds"],
+              properties: {
+                rejectedItemIds: { type: "array", items: { type: "integer" } },
+                looks: {
+                  type: "array",
+                  minItems: 1,
+                  maxItems: maxLooks,
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: [
+                      "title",
+                      "occasion",
+                      "selectedItemIds",
+                      "outfitBreakdown",
+                      "stylistCommentary",
+                      "faceShapeNote",
+                      "skinToneNote",
+                      "luckyColorNote",
+                      "colorPalette",
+                      "stylingTips",
+                    ],
+                    properties: {
+                      title: { type: "string" },
+                      occasion: { type: "string" },
+                      selectedItemIds: { type: "array", items: { type: "integer" }, minItems: 2 },
+                      outfitBreakdown: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          additionalProperties: false,
+                          required: ["itemId", "role", "why"],
+                          properties: {
+                            itemId: { type: "integer" },
+                            role: { type: "string" },
+                            why: { type: "string" },
+                          },
+                        },
+                      },
+                      stylistCommentary: { type: "string" },
+                      faceShapeNote: { type: "string" },
+                      skinToneNote: { type: "string" },
+                      luckyColorNote: { type: "string" },
+                      colorPalette: {
+                        type: "array",
+                        minItems: 3,
+                        maxItems: 5,
+                        items: {
+                          type: "object",
+                          additionalProperties: false,
+                          required: ["name", "hex"],
+                          properties: {
+                            name: { type: "string" },
+                            hex: { type: "string" },
+                          },
+                        },
+                      },
+                      stylingTips: { type: "array", items: { type: "string" }, minItems: 2 },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const raw = llmResp.choices[0]?.message?.content;
+      if (typeof raw !== "string") {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI returned no content" });
+      }
+      let parsedSet: any;
+      try {
+        parsedSet = JSON.parse(raw);
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI returned invalid JSON" });
+      }
+
+      // Index every pool item for quick lookup when building buyItems / try-on.
+      const itemById = new Map<number, (typeof itemsForLLM)[number]>();
+      for (const it of itemsForLLM) itemById.set(it.id, it);
+
+      const rawLooks: any[] = Array.isArray(parsedSet?.looks) ? parsedSet.looks : [];
+      const validLooks = rawLooks
+        .map(look => {
+          const selectedItemIds: number[] = (look?.selectedItemIds || []).filter((id: number) =>
+            validIdSet.has(id),
+          );
+          return { ...look, selectedItemIds };
+        })
+        // require ≥2 items AND at least one buyable piece (the point of cross-user)
+        .filter(
+          look =>
+            look.selectedItemIds.length >= 2 &&
+            look.selectedItemIds.some((id: number) => buyableIds.has(id)),
+        );
+
+      if (validLooks.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "AI ไม่ได้จัดลุคข้ามตู้ที่มีชิ้นซื้อเพิ่มได้ ลองใหม่อีกครั้ง",
+        });
+      }
+
+      const savedLooks: any[] = [];
+      for (const look of validLooks) {
+        const selectedIds: number[] = look.selectedItemIds;
+
+        // Buyable pieces in this look → CTA list saved into analysis.buyItems.
+        const buyItems = selectedIds
+          .filter(id => buyableIds.has(id))
+          .map(id => {
+            const it = itemById.get(id)!;
+            return {
+              id: it.id,
+              name: it.name,
+              category: it.category,
+              color: it.color,
+              priceBaht: it.priceBaht,
+              imageUrl: it.imageUrl,
+            };
+          });
+
+        // Try-on image from selected garments' hosted photos (skip base64).
+        let tryOnImageUrl: string | null = null;
+        try {
+          const refs = selectedIds
+            .map(id => itemById.get(id))
+            .filter((i): i is (typeof itemsForLLM)[number] => !!i)
+            .filter(i => i.imageUrl && /^https?:\/\//i.test(i.imageUrl))
+            .slice(0, 4)
+            .map(i => ({ url: i.imageUrl as string, mimeType: "image/jpeg" }));
+          if (refs.length > 0) {
+            const attrs: string[] = [];
+            if (profile?.skinTone) attrs.push(`${profile.skinTone} skin tone`);
+            if (profile?.undertone) attrs.push(`${profile.undertone} undertone`);
+            const subject = attrs.length
+              ? `a tasteful editorial fashion model with ${attrs.join(", ")}`
+              : "a tasteful editorial fashion model";
+            const palette = Array.isArray(look.colorPalette)
+              ? look.colorPalette.map((c: any) => c.hex).filter(Boolean).join(", ")
+              : "";
+            const garmentLine = selectedIds
+              .map(id => itemById.get(id))
+              .filter(Boolean)
+              .map(i => `${i!.category}${i!.color ? ` (${i!.color})` : ""}`)
+              .join("; ");
+            const prompt = `Photorealistic head-to-toe editorial fashion photograph of ${subject}, actually WEARING the exact garments provided as reference images (reproduce each garment's real silhouette, fabric, color and details): ${garmentLine}. Garments must look truly worn — correct draping, natural shadows, realistic fit.${palette ? ` Color palette: ${palette}.` : ""} Soft natural studio light, neutral cream backdrop, magazine-quality composition. Full-body shot.`;
+            const gen = await generateImage({ prompt, originalImages: refs });
+            tryOnImageUrl = gen.url ?? null;
+          }
+        } catch (e) {
+          console.warn("[matching] cross-user try-on image failed:", (e as Error)?.message ?? e);
+        }
+
+        const analysisWithBuy = { ...look, buyItems };
+
+        const inserted = await db
+          .insert(outfitRecommendations)
+          .values({
+            userId: ctx.user.id,
+            title: look.title || "Cross-closet Look",
+            occasion: look.occasion || occasion,
+            itemIds: selectedIds,
+            analysis: analysisWithBuy,
+            luckyColors: luckyColor ?? null,
+            tryOnImageUrl,
+            source: "cross_user",
+          })
+          .$returningId();
+
+        const newId = Array.isArray(inserted) ? (inserted[0] as any)?.id : undefined;
+        savedLooks.push({ id: newId, tryOnImageUrl, buyItems, ...look });
       }
 
       return { looks: savedLooks };

@@ -15,7 +15,7 @@ import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt } from "lucide-react";
+import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -61,6 +61,14 @@ export default function LookbookPage() {
       outfits.refetch();
     },
     onError: e => toast.error(`จัดลุคไม่สำเร็จ: ${e.message}`),
+  });
+
+  const crossMatch = trpc.matching.crossUserMatch.useMutation({
+    onSuccess: res => {
+      toast.success(`จัดลุคข้ามตู้สำเร็จ ${res.looks?.length ?? 0} ลุค`);
+      outfits.refetch();
+    },
+    onError: e => toast.error(`จับคู่ข้ามตู้ไม่สำเร็จ: ${e.message}`),
   });
 
   const deleteOutfit = trpc.outfits.delete.useMutation({
@@ -188,9 +196,25 @@ export default function LookbookPage() {
                 <Wand2 className="w-4 h-4 mr-2" />
                 {generate.isPending ? "กำลังจัดลุค..." : "ให้ AI จัดลุค"}
               </Button>
+              <Button
+                variant="outline"
+                disabled={crossMatch.isPending}
+                onClick={() =>
+                  crossMatch.mutate({
+                    maxLooks,
+                    occasion: occasion.trim() || undefined,
+                  })
+                }
+              >
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                {crossMatch.isPending ? "กำลังจับคู่ข้ามตู้..." : "จับคู่ข้ามตู้ (ช้อปเพิ่ม)"}
+              </Button>
             </div>
             <p className="text-xs text-gray-400">
               ต้องมีเสื้อผ้าอย่างน้อย 2 ชิ้นในตู้ + ตั้งค่า OPENAI_API_KEY (จัดลุค) และ GOOGLE_AI_API_KEY (รูป try-on)
+            </p>
+            <p className="text-xs text-gray-400">
+              "จับคู่ข้ามตู้" จะนำเสื้อผ้าที่คนอื่นลงขายมาแมตช์กับตู้ของคุณ พร้อมปุ่มช้อปชิ้นที่ต้องซื้อเพิ่ม
             </p>
           </CardContent>
         </Card>
@@ -258,11 +282,66 @@ export default function LookbookPage() {
                           </p>
                         )}
 
+                        {Array.isArray(look.buyItems) && look.buyItems.length > 0 && (
+                          <div className="mt-3 border-t border-dashed border-gray-200 pt-3">
+                            <p className="text-xs font-medium text-gray-700 flex items-center gap-1 mb-2">
+                              <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
+                              ช้อปเพิ่มให้ลุคนี้สมบูรณ์
+                            </p>
+                            <div className="space-y-2">
+                              {look.buyItems.map((b: any) => (
+                                <div
+                                  key={b.id}
+                                  className="flex items-center gap-3 bg-emerald-50/60 rounded-md px-2 py-2"
+                                >
+                                  {b.imageUrl && /^https?:\/\//i.test(b.imageUrl) && (
+                                    <img
+                                      src={b.imageUrl}
+                                      alt={b.name}
+                                      loading="lazy"
+                                      className="w-12 h-12 rounded object-cover border border-black/5"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-gray-800 truncate">{b.name}</p>
+                                    {b.color && (
+                                      <p className="text-[11px] text-gray-500">{b.color}</p>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    {b.priceBaht != null && (
+                                      <p className="text-sm font-semibold text-emerald-700">
+                                        ฿{Number(b.priceBaht).toLocaleString()}
+                                      </p>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 mt-1 text-xs"
+                                      onClick={() =>
+                                        toast.info("สนใจซื้อชิ้นนี้ — ระบบติดต่อผู้ขายกำลังจะมา")
+                                      }
+                                    >
+                                      สนใจซื้อ
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap gap-2 mt-3">
                           <Badge variant="secondary" className="text-xs">
                             <Shirt className="w-3 h-3 mr-1" />
                             {itemIds.length} ชิ้น
                           </Badge>
+                          {o.source === "cross_user" && (
+                            <Badge className="text-xs bg-emerald-600 hover:bg-emerald-600">
+                              <ShoppingBag className="w-3 h-3 mr-1" />
+                              ข้ามตู้
+                            </Badge>
+                          )}
                           {lucky?.primary?.name && (
                             <Badge variant="outline" className="text-xs">
                               สีนำโชค: {lucky.primary.name}
