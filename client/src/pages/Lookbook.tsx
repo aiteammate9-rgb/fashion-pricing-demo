@@ -71,6 +71,11 @@ export default function LookbookPage() {
     onError: e => toast.error(`ลบไม่สำเร็จ: ${e.message}`),
   });
 
+  const migrateImages = trpc.wardrobe.migrateImages.useMutation({
+    onSuccess: res => toast.success(`อัปเกรดรูปแล้ว ${res.migrated}/${res.total} ชิ้น`),
+    onError: e => toast.error(`อัปเกรดไม่สำเร็จ: ${e.message}`),
+  });
+
   if (!authLoading && !user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
@@ -131,6 +136,16 @@ export default function LookbookPage() {
                 วันเกิดที่บันทึก: {profile.data.birthDate}
               </p>
             )}
+            <button
+              type="button"
+              disabled={migrateImages.isPending}
+              onClick={() => migrateImages.mutate()}
+              className="block text-xs text-gray-400 underline mt-1"
+            >
+              {migrateImages.isPending
+                ? "กำลังอัปเกรดรูปเก่า..."
+                : "อัปเกรดรูปเก่าในตู้ → คลาวด์ (เพื่อให้มี try-on)"}
+            </button>
           </CardContent>
         </Card>
 

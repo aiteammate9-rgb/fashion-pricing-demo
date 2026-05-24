@@ -258,6 +258,57 @@ export const wardrobeRouter = router({
       return { success: true };
     }),
 
+  // One-time: convert legacy base64 (data:) images already stored in the wardrobe
+  // into hosted Cloudinary URLs, so old items also work with the AI try-on
+  // (which needs real image URLs as references).
+  migrateImages: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+
+    const rows = await db
+      .select()
+      .from(wardrobe)
+      .where(eq(wardrobe.userId, ctx.user.id));
+
+    const uploadDataUri = async (
+      val: string | null,
+      keyName: string
+    ): Promise<string | null> => {
+      if (!val || !val.startsWith("data:")) return null; // already a URL or empty → skip
+      const m = /^data:([^;]+);base64,(.+)$/.exec(val);
+      if (!m) return null;
+      const mime = m[1];
+      const ext = mime.includes("png") ? "png" : "jpg";
+      const buffer = Buffer.from(m[2], "base64");
+      const { url } = await storagePut(
+        `wardrobe/${ctx.user.id}/${keyName}_${Date.now()}.${ext}`,
+        buffer,
+        mime
+      );
+      return url;
+    };
+
+    let migrated = 0;
+    for (const it of rows) {
+      const set: { imageUrl?: string; imageUrl2?: string; imageUrl3?: string } = {};
+      try {
+        const u1 = await uploadDataUri(it.imageUrl, "item");
+        if (u1) set.imageUrl = u1;
+        const u2 = await uploadDataUri(it.imageUrl2, "item_back");
+        if (u2) set.imageUrl2 = u2;
+        const u3 = await uploadDataUri(it.imageUrl3, "item_defect");
+        if (u3) set.imageUrl3 = u3;
+        if (Object.keys(set).length > 0) {
+          await db.update(wardrobe).set(set).where(eq(wardrobe.id, it.id));
+          migrated++;
+        }
+      } catch (e) {
+        console.warn("[Wardrobe] migrate image failed for item", it.id, (e as Error)?.message ?? e);
+      }
+    }
+    return { migrated, total: rows.length };
+  }),
+
   // Get wardrobe stats (count by category)
   stats: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
