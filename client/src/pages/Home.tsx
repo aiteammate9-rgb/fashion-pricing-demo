@@ -753,8 +753,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Wardrobe nav link */}
-      <div className="fixed top-4 right-4 z-40">
+      {/* Nav links: matching (lookbook) + wardrobe */}
+      <div className="fixed top-4 right-4 z-40 flex gap-2">
+        <Link href="/lookbook">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
+            <Sparkles className="w-3.5 h-3.5" />
+            แมตช์ชุด
+          </Button>
+        </Link>
         <Link href="/wardrobe">
           <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
             <Shirt className="w-3.5 h-3.5" />
