@@ -9,7 +9,6 @@ export async function setupVite(app: Express, server: Server) {
   // production (vite is a devDependency; `pnpm install --prod` does not install it).
   // This branch only runs in development.
   const { createServer: createViteServer } = await import("vite");
-  const viteConfig = (await import("../../vite.config")).default;
 
   const serverOptions = {
     middlewareMode: true,
@@ -17,9 +16,13 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true as const,
   };
 
+  // Let Vite load the project's vite.config.ts from disk at runtime (dev only).
+  // We must NOT `import` vite.config here: esbuild bundles that local file into
+  // the server output and hoists its dev-only plugin imports (e.g.
+  // @builder.io/vite-plugin-jsx-loc) to the top, which breaks `node dist/index.js`
+  // in production where devDependencies are not installed.
   const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
+    configFile: path.resolve(import.meta.dirname, "../../vite.config.ts"),
     server: serverOptions,
     appType: "custom",
   });
