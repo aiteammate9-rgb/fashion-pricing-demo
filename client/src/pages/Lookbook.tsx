@@ -71,6 +71,14 @@ export default function LookbookPage() {
     onError: e => toast.error(`จับคู่ข้ามตู้ไม่สำเร็จ: ${e.message}`),
   });
 
+  const placeOrder = trpc.orders.create.useMutation({
+    onSuccess: () => {
+      toast.success("จองแล้ว — ชิ้นนี้ถูกกันไว้ให้คุณ รอผู้ขายยืนยัน");
+      outfits.refetch();
+    },
+    onError: e => toast.error(`สั่งซื้อไม่สำเร็จ: ${e.message}`),
+  });
+
   const deleteOutfit = trpc.outfits.delete.useMutation({
     onSuccess: () => {
       toast.success("ลบลุคแล้ว");
@@ -318,11 +326,12 @@ export default function LookbookPage() {
                                       size="sm"
                                       variant="outline"
                                       className="h-7 mt-1 text-xs"
+                                      disabled={placeOrder.isPending}
                                       onClick={() =>
-                                        toast.info("สนใจซื้อชิ้นนี้ — ระบบติดต่อผู้ขายกำลังจะมา")
+                                        placeOrder.mutate({ itemId: b.id, outfitId: o.id })
                                       }
                                     >
-                                      สนใจซื้อ
+                                      {placeOrder.isPending ? "กำลังจอง..." : "สนใจซื้อ"}
                                     </Button>
                                   </div>
                                 </div>

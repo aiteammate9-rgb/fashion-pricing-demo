@@ -108,7 +108,8 @@ export const wardrobe = mysqlTable("wardrobe", {
   thaiMarketTier: varchar("thaiMarketTier", { length: 32 }),
   thaiMarketDiscount: int("thaiMarketDiscount"),
   // Status & Sale tracking
-  status: mysqlEnum("status", ["in_wardrobe", "listed", "sold"]).default("in_wardrobe").notNull(),
+  // reserved = a buyer placed an order via cross-user matching; held until the seller confirms.
+  status: mysqlEnum("status", ["in_wardrobe", "listed", "reserved", "sold"]).default("in_wardrobe").notNull(),
   listedPrice: int("listedPrice"),
   soldPrice: int("soldPrice"),
   soldAt: timestamp("soldAt"),
@@ -180,3 +181,28 @@ export const outfitRecommendations = mysqlTable("outfit_recommendations", {
 
 export type OutfitRecommendation = typeof outfitRecommendations.$inferSelect;
 export type InsertOutfitRecommendation = typeof outfitRecommendations.$inferInsert;
+
+// ─── Orders Table (cross-user marketplace purchases) ───
+// Created when a buyer taps "สนใจซื้อ" on a cross-closet look. The reserved
+// wardrobe item is held until the seller confirms (→ sold) or rejects (→ listed).
+
+export const orders = mysqlTable("orders", {
+  id: int("id").autoincrement().primaryKey(),
+  buyerUserId: int("buyerUserId").notNull(),
+  sellerUserId: int("sellerUserId").notNull(),
+  itemId: int("itemId").notNull(), // wardrobe.id of the purchased garment
+  outfitId: int("outfitId"), // optional: the cross-user look this came from
+  priceBaht: int("priceBaht").notNull(),
+  // pending  = buyer reserved, awaiting seller
+  // confirmed = seller accepted → item marked sold
+  // cancelled = seller rejected or buyer cancelled → item back to listed
+  status: mysqlEnum("status", ["pending", "confirmed", "cancelled"])
+    .default("pending")
+    .notNull(),
+  note: varchar("note", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;

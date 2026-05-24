@@ -100,6 +100,20 @@ export default function WardrobePage() {
     listMutation.mutate({ id: listingItem.id, listedPrice: price, salesChannel: "sheowa" });
   };
 
+  // ── Seller side: incoming reservation orders ──
+  const incoming = trpc.orders.incoming.useQuery(undefined, { enabled: !!user });
+  const pendingOrders = (incoming.data ?? []).filter((o: any) => o.status === "pending");
+
+  const sellerAction = trpc.orders.sellerAction.useMutation({
+    onSuccess: (res) => {
+      toast.success(res.status === "confirmed" ? "ยืนยันการขายแล้ว" : "ปฏิเสธออเดอร์แล้ว");
+      incoming.refetch();
+      refetch();
+      stats.refetch();
+    },
+    onError: (err) => toast.error(`ทำรายการไม่สำเร็จ: ${err.message}`),
+  });
+
   // Get category label helper
   const getCategoryLabel = (value: string) => {
     return CATEGORIES.find((c) => c.value === value)?.label || value;
@@ -216,6 +230,48 @@ export default function WardrobePage() {
 
       {/* Content */}
       <main className="container py-6">
+        {/* Incoming reservation orders (seller side) */}
+        {pendingOrders.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-emerald-600/30 bg-emerald-50 p-4">
+            <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5 mb-3">
+              <Tag className="w-4 h-4 text-emerald-700" />
+              มีคนสนใจซื้อ ({pendingOrders.length})
+            </h2>
+            <div className="space-y-2">
+              {pendingOrders.map((o: any) => (
+                <div
+                  key={o.id}
+                  className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-border"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-foreground">ออเดอร์ #{o.id}</p>
+                    <p className="text-sm font-semibold text-emerald-700">
+                      ฿{Number(o.priceBaht).toLocaleString()}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs bg-teal-600 hover:bg-teal-700"
+                    disabled={sellerAction.isPending}
+                    onClick={() => sellerAction.mutate({ id: o.id, action: "confirm" })}
+                  >
+                    ยืนยันขาย
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
+                    disabled={sellerAction.isPending}
+                    onClick={() => sellerAction.mutate({ id: o.id, action: "cancel" })}
+                  >
+                    ปฏิเสธ
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -280,6 +336,16 @@ export default function WardrobePage() {
                               กำลังขาย
                             </Badge>
                           )}
+                          {item.status === "reserved" && (
+                            <Badge className="text-[9px] px-1.5 py-0 bg-amber-500/90 text-white border-0">
+                              มีคนจอง
+                            </Badge>
+                          )}
+                          {item.status === "sold" && (
+                            <Badge className="text-[9px] px-1.5 py-0 bg-warm-800/90 text-white border-0">
+                              ขายแล้ว
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Delete button */}
@@ -328,18 +394,42 @@ export default function WardrobePage() {
                             })}
                           </span>
                         </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={item.status === "listed" ? "secondary" : "outline"}
-                          className="w-full h-7 mt-1 text-[11px] gap-1"
-                          onClick={() => openListDialog(item)}
-                        >
-                          <Tag className="w-3 h-3" />
-                          {item.status === "listed"
-                            ? `กำลังขาย ฿${(item.listedPrice ?? 0).toLocaleString()}`
-                            : "ลงขาย"}
-                        </Button>
+                        {item.status === "sold" ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled
+                            className="w-full h-7 mt-1 text-[11px] gap-1"
+                          >
+                            <Tag className="w-3 h-3" />
+                            ขายแล้ว ฿{(item.soldPrice ?? item.listedPrice ?? 0).toLocaleString()}
+                          </Button>
+                        ) : item.status === "reserved" ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            disabled
+                            className="w-full h-7 mt-1 text-[11px] gap-1"
+                          >
+                            <Tag className="w-3 h-3" />
+                            มีคนจอง ฿{(item.listedPrice ?? 0).toLocaleString()}
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={item.status === "listed" ? "secondary" : "outline"}
+                            className="w-full h-7 mt-1 text-[11px] gap-1"
+                            onClick={() => openListDialog(item)}
+                          >
+                            <Tag className="w-3 h-3" />
+                            {item.status === "listed"
+                              ? `กำลังขาย ฿${(item.listedPrice ?? 0).toLocaleString()}`
+                              : "ลงขาย"}
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
