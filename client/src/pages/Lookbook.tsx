@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag } from "lucide-react";
+import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag, Check, Trash } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -50,6 +50,8 @@ export default function LookbookPage() {
   const [occasion, setOccasion] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [selectedOutfit, setSelectedOutfit] = useState<any | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const profile = trpc.profile.me.useQuery(undefined, { enabled: !!user });
   const outfits = trpc.outfits.list.useQuery(undefined, { enabled: !!user });
@@ -93,6 +95,29 @@ export default function LookbookPage() {
     },
     onError: e => toast.error(`ลบไม่สำเร็จ: ${e.message}`),
   });
+
+  const deleteManyOutfits = trpc.outfits.deleteMany.useMutation({
+    onSuccess: res => {
+      toast.success(`ลบแล้ว ${res.deleted} ลุค`);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      outfits.refetch();
+    },
+    onError: e => toast.error(`ลบไม่สำเร็จ: ${e.message}`),
+  });
+
+  const toggleSelect = (id: number) =>
+    setSelectedIds(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  const selectAllLooks = () =>
+    setSelectedIds(new Set((outfits.data ?? []).map((o: any) => o.id)));
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
 
   const migrateImages = trpc.wardrobe.migrateImages.useMutation({
     onSuccess: res => toast.success(`อัปเกรดรูปแล้ว ${res.migrated}/${res.total} ชิ้น`),
@@ -235,7 +260,32 @@ export default function LookbookPage() {
         </Card>
 
         {/* Saved looks */}
-        <h2 className="text-sm font-medium text-gray-700 mb-3">ลุคที่บันทึกไว้</h2>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h2 className="text-sm font-medium text-gray-700">ลุคที่บันทึกไว้</h2>
+          {outfits.data && outfits.data.length > 0 &&
+            (!selectMode ? (
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectMode(true)}>
+                <Check className="w-4 h-4" /> เลือก
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button variant="outline" size="sm" onClick={selectAllLooks}>
+                  ทั้งหมด
+                </Button>
+                <Button variant="ghost" size="sm" onClick={exitSelectMode}>
+                  ยกเลิก
+                </Button>
+                <Button
+                  size="sm"
+                  className="gap-1.5 bg-red-500 hover:bg-red-600 text-white"
+                  disabled={selectedIds.size === 0 || deleteManyOutfits.isPending}
+                  onClick={() => deleteManyOutfits.mutate({ ids: Array.from(selectedIds) })}
+                >
+                  <Trash className="w-4 h-4" /> ลบ ({selectedIds.size})
+                </Button>
+              </div>
+            ))}
+        </div>
         {outfits.isLoading ? (
           <p className="text-sm text-gray-400">กำลังโหลด...</p>
         ) : !outfits.data || outfits.data.length === 0 ? (
@@ -249,7 +299,7 @@ export default function LookbookPage() {
                   <motion.button
                     key={o.id}
                     type="button"
-                    onClick={() => setSelectedOutfit(o)}
+                    onClick={() => (selectMode ? toggleSelect(o.id) : setSelectedOutfit(o))}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
@@ -258,6 +308,17 @@ export default function LookbookPage() {
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow border-border">
                       <CardContent className="p-0">
                         <div className="aspect-[3/4] bg-warm-100 relative">
+                          {selectMode && (
+                            <span
+                              className={`absolute top-2 right-2 z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                selectedIds.has(o.id)
+                                  ? "bg-teal-600 border-teal-600"
+                                  : "bg-white/85 border-white"
+                              }`}
+                            >
+                              {selectedIds.has(o.id) && <Check className="w-4 h-4 text-white" />}
+                            </span>
+                          )}
                           {o.tryOnImageUrl ? (
                             <img
                               src={o.tryOnImageUrl}

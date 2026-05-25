@@ -38,6 +38,8 @@ import {
   ScanLine,
   Tag,
   RotateCw,
+  Check,
+  Trash,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -51,6 +53,9 @@ export default function WardrobePage() {
   // List-for-sale dialog state
   const [listingItem, setListingItem] = useState<any | null>(null);
   const [listPrice, setListPrice] = useState<string>("");
+  // Multi-select delete
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const { data, isLoading, refetch } = trpc.wardrobe.list.useQuery(
     { limit: 100, offset: 0, category: filterCategory === "all" ? undefined : filterCategory },
@@ -114,6 +119,30 @@ export default function WardrobePage() {
     },
     onError: (err) => toast.error(`ทำรายการไม่สำเร็จ: ${err.message}`),
   });
+
+  const deleteManyMutation = trpc.wardrobe.deleteMany.useMutation({
+    onSuccess: (res) => {
+      toast.success(`ลบแล้ว ${res.deleted} ชิ้น`);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      refetch();
+      stats.refetch();
+    },
+    onError: (err) => toast.error(`ลบไม่สำเร็จ: ${err.message}`),
+  });
+
+  const toggleSelect = (id: number) =>
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  const selectAllItems = () =>
+    setSelectedIds(new Set((data?.items ?? []).map((i: any) => i.id)));
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
 
   // Get category label helper
   const getCategoryLabel = (value: string) => {
@@ -294,6 +323,32 @@ export default function WardrobePage() {
             </Button>
           </div>
         ) : (
+          <>
+            {/* Multi-select toolbar */}
+            <div className="flex items-center justify-between gap-2 mb-4">
+              {!selectMode ? (
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectMode(true)}>
+                  <Check className="w-4 h-4" /> เลือกหลายชิ้น
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button variant="outline" size="sm" onClick={selectAllItems}>
+                    เลือกทั้งหมด
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={exitSelectMode}>
+                    ยกเลิก
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="gap-1.5 bg-red-500 hover:bg-red-600 text-white"
+                    disabled={selectedIds.size === 0 || deleteManyMutation.isPending}
+                    onClick={() => deleteManyMutation.mutate({ ids: Array.from(selectedIds) })}
+                  >
+                    <Trash className="w-4 h-4" /> ลบที่เลือก ({selectedIds.size})
+                  </Button>
+                </div>
+              )}
+            </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <AnimatePresence>
               {data.items.map((item: any, idx: number) => (
@@ -308,6 +363,24 @@ export default function WardrobePage() {
                     <CardContent className="p-0">
                       {/* Image */}
                       <div className="aspect-[3/4] relative bg-warm-100">
+                        {selectMode && (
+                          <button
+                            type="button"
+                            onClick={() => toggleSelect(item.id)}
+                            className="absolute inset-0 z-30 bg-black/10 flex items-start justify-end p-2"
+                            aria-label="เลือกชิ้นนี้"
+                          >
+                            <span
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                selectedIds.has(item.id)
+                                  ? "bg-teal-600 border-teal-600"
+                                  : "bg-white/85 border-white"
+                              }`}
+                            >
+                              {selectedIds.has(item.id) && <Check className="w-4 h-4 text-white" />}
+                            </span>
+                          </button>
+                        )}
                         {item.imageUrl ? (
                           <>
                             {/* Front image (default) */}
@@ -458,6 +531,7 @@ export default function WardrobePage() {
               ))}
             </AnimatePresence>
           </div>
+          </>
         )}
       </main>
 

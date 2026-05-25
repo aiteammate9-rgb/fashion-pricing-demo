@@ -5,7 +5,7 @@
  * Items are saved after scanning/evaluation and stored permanently.
  */
 
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -195,6 +195,20 @@ export const wardrobeRouter = router({
         .where(and(eq(wardrobe.id, input.id), eq(wardrobe.userId, ctx.user.id)));
 
       return { success: true };
+    }),
+
+  // Delete many wardrobe items at once (multi-select).
+  deleteMany: protectedProcedure
+    .input(z.object({ ids: z.array(z.number()).min(1).max(200) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      await db
+        .delete(wardrobe)
+        .where(and(eq(wardrobe.userId, ctx.user.id), inArray(wardrobe.id, input.ids)));
+
+      return { success: true, deleted: input.ids.length };
     }),
 
   // Mark item as sold (for pricing learning)

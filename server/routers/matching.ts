@@ -912,4 +912,19 @@ export const outfitsRouter = router({
         );
       return { success: true } as const;
     }),
+
+  deleteMany: protectedProcedure
+    .input(z.object({ ids: z.array(z.number().int().positive()).min(1).max(100) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      await db
+        .delete(outfitRecommendations)
+        .where(
+          and(
+            eq(outfitRecommendations.userId, ctx.user.id),
+            inArray(outfitRecommendations.id, input.ids),
+          ),
+        );
+      return { success: true, deleted: input.ids.length } as const;
+    }),
 });
