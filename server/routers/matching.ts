@@ -38,7 +38,10 @@ import { generateImage } from "../_core/imageGeneration";
 import { storagePut } from "../storage";
 import { pushToUser, outfitMessage } from "../_core/lineMessaging";
 
-const APP_LOOKBOOK_URL = "https://fashion-pricing-demo.onrender.com/lookbook";
+// Public app URL — set APP_PUBLIC_URL in Render (e.g. https://app.sheowa.com).
+// Falls back to the Render URL so links keep working before the custom domain is live.
+const APP_BASE_URL = (process.env.APP_PUBLIC_URL || "https://fashion-pricing-demo.onrender.com").replace(/\/+$/, "");
+const APP_LOOKBOOK_URL = `${APP_BASE_URL}/lookbook`;
 
 const FACE_SHAPES = ["oval", "round", "square", "heart", "oblong", "diamond"] as const;
 const SKIN_TONES = ["fair", "light", "medium", "tan", "deep"] as const;
