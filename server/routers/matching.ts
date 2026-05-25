@@ -242,7 +242,8 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
 - looks: 1..${maxLooks} entries. Each has selectedItemIds, outfitBreakdown, stylistCommentary, faceShapeNote, skinToneNote, luckyColorNote, colorPalette, stylingTips, title, occasion.
 - selectedItemIds entries MUST be wardrobe ids from the list above.
 - colorPalette: 3–5 hex colors that actually appear in that look.
-- stylistCommentary: 4–5 ประโยคภาษาไทยทรงพลังสไตล์ Vogue editor's note — เปิดด้วย hook ที่ "สะกดทุกสายตา", อธิบายเหตุผลเชิงเทคนิค (undertone/silhouette/fabric/proportion), ใส่ social-validation อย่างน้อย 1 ประโยค ("ในทันทีที่ปรากฏตัว", "ในสายตาผู้อื่น"), ชู finishing touch, ปิดด้วยประโยคมั่นใจสั้นคม. ห้ามใช้คำกลาง ๆ เช่น "ค่อนข้าง", "พอประมาณ", "อาจจะ".
+- title: ชื่อลุคภาษาไทยสั้น 2–5 คำ ทรงพลังและเฉพาะตัว สื่อถึง "รสนิยมที่เหนือระดับ" — ห้ามคำกลางๆ เช่น "ลุคสวย", "ลุคน่ารัก", "ลุคลงตัว".
+- stylistCommentary: 4–5 ประโยคภาษาไทยเฉียบคม หนักแน่น กระชับ สไตล์ Vogue editor's note. เปิดด้วย hook ที่ "สะกดทุกสายตา"; อธิบายเหตุผลเชิงเทคนิค (undertone/silhouette/fabric/proportion) อย่างกระชับ; ใส่ social validation อย่างน้อย 2 จุด ด้วยวลีเช่น "ในทันทีที่ปรากฏตัว", "ในสายตาผู้อื่น", "ทุกคนรอบตัวจะสัมผัสได้" เพื่อให้ผู้อ่านเห็นภาพตัวเองโดดเด่นท่ามกลางผู้คน; ปิดด้วยประโยคมั่นใจสั้นคม. แทนคำเรื่อยๆ ด้วยคำทรงพลัง (เช่น "ลงตัวของสีสัน" → "สะกดทุกสายตา", "น่าค้นหา" → "รสนิยมที่เหนือระดับ"). ตัดคำขยายอ่อนแรงทิ้งให้หมด เช่น "ค่อนข้าง", "พอประมาณ", "อาจจะ", "ดูดี", "น่าจะ".
 - Every textual field must be written in Thai (ภาษาไทย).`;
 
       const userContent: Array<
@@ -619,7 +620,8 @@ ${occasion}
 - Return strict JSON only.
 - looks: 1..${maxLooks} entries; each has selectedItemIds (2–4, at least one buyable), outfitBreakdown, stylistCommentary, faceShapeNote, skinToneNote, luckyColorNote, colorPalette (3–5 real hex), stylingTips, title, occasion.
 - selectedItemIds MUST be ids from the pool above.
-- stylistCommentary: 4–5 ประโยคภาษาไทยทรงพลังสไตล์ Vogue editor's note, ระบุชัดว่าชิ้นที่ซื้อเพิ่มทำให้ลุคสมบูรณ์อย่างไร.
+- title: ชื่อลุคภาษาไทยสั้น 2–5 คำ ทรงพลังและเฉพาะตัว สื่อถึง "รสนิยมที่เหนือระดับ" — ห้ามคำกลางๆ เช่น "ลุคสวย", "ลุคลงตัว".
+- stylistCommentary: 4–5 ประโยคภาษาไทยเฉียบคม หนักแน่น กระชับ สไตล์ Vogue editor's note. เปิดด้วย hook "สะกดทุกสายตา"; ระบุชัดว่าชิ้นที่ "ควรซื้อเพิ่ม" ปลดล็อกลุคอย่างไร พร้อมเหตุผลเชิงเทคนิคแบบกระชับ; ใส่ social validation อย่างน้อย 2 จุด ด้วยวลีเช่น "ในทันทีที่ปรากฏตัว", "ในสายตาผู้อื่น", "ทุกคนรอบตัวจะสัมผัสได้"; ปิดด้วยประโยคมั่นใจสั้นคม. แทนคำเรื่อยๆ ด้วยคำทรงพลัง (เช่น "ลงตัวของสีสัน" → "สะกดทุกสายตา", "น่าค้นหา" → "รสนิยมที่เหนือระดับ"). ตัดคำอ่อนแรงทิ้ง เช่น "ค่อนข้าง", "พอประมาณ", "อาจจะ", "ดูดี".
 - Every textual field in Thai (ภาษาไทย).`;
 
       const userContent: Array<
