@@ -2,8 +2,22 @@
  * AnalysisLoadingOverlay – แสดงสถานะ step-by-step ระหว่าง AI ประมวลผล
  * มี 4 ขั้นตอน: อัปโหลดรูป → วิเคราะห์ AI → คำนวณราคา → สร้างผลลัพธ์
  */
-import { motion } from "framer-motion";
-import { Camera, Brain, Calculator, CheckCircle2, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Camera, Brain, Calculator, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+
+const FASHION_TIPS = [
+  "เสื้อโทนเย็น (ฟ้า เทา ชมพูอมฟ้า) เข้ากับผิวอันเดอร์โทนเย็น",
+  "โทนอุ่น (ครีม น้ำตาล ส้มอิฐ) ช่วยขับผิวอันเดอร์โทนอุ่นให้ดูสุขภาพดี",
+  "ตัวบนหลวม → จับคู่ตัวล่างทรงเข้ารูป ให้สัดส่วนสมดุล",
+  "สีเอิร์ธโทนใส่ด้วยกันได้แทบทุกแบบ แทบไม่พลาด",
+  "ชิ้นลายเด่น 1 ชิ้นต่อลุคก็พอ ที่เหลือเล่นสีพื้น",
+  "รองเท้าโทนเดียวกับกางเกง ช่วยให้ขาดูยาวขึ้น",
+  "ผ้าเนื้อมันกับผ้าเนื้อด้าน จับคู่ให้พอดี อย่าให้ตีกัน",
+  "สีขาว-ครีมเป็นเบสที่จับคู่อะไรก็ดูสะอาดตา",
+  "เครื่องประดับชิ้นเล็กสีทอง/เงิน ช่วยยกลุคให้ดูพรีเมียม",
+  "ลุคโมโนโครม (สีเดียวไล่เฉด) ดูแพงและสูงโปร่ง",
+];
 
 export type AnalysisStep = "uploading" | "analyzing" | "consensus" | "pricing" | "done";
 
@@ -25,6 +39,16 @@ function getStepIndex(step: AnalysisStep): number {
 }
 
 export default function AnalysisLoadingOverlay({ currentStep, visible }: Props) {
+  const [tipIdx, setTipIdx] = useState(0);
+
+  useEffect(() => {
+    if (!visible || currentStep === "done") return;
+    const id = setInterval(() => {
+      setTipIdx((i) => (i + 1) % FASHION_TIPS.length);
+    }, 4500);
+    return () => clearInterval(id);
+  }, [visible, currentStep]);
+
   if (!visible) return null;
 
   const currentIndex = getStepIndex(currentStep);
@@ -135,8 +159,30 @@ export default function AnalysisLoadingOverlay({ currentStep, visible }: Props) 
           />
         </div>
 
+        {/* Rotating fashion tips — keeps the user engaged while AI works */}
+        {currentStep !== "done" && (
+          <div className="mt-4 rounded-xl bg-warm-50 border border-warm-200 px-3 py-3 min-h-[64px] flex items-start gap-2">
+            <Sparkles className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[10px] font-medium text-teal-700 mb-0.5">เกร็ดแฟชั่นระหว่างรอ</p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={tipIdx}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.35 }}
+                  className="text-xs text-foreground leading-relaxed"
+                >
+                  {FASHION_TIPS[tipIdx]}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
+
         <p className="text-center text-[11px] text-muted-foreground mt-3">
-          กรุณารอสักครู่ ระบบกำลังประมวลผล
+          {currentStep === "done" ? "เสร็จแล้ว!" : "กำลังประมวลผล ใช้เวลาสักครู่"}
         </p>
       </motion.div>
     </motion.div>

@@ -225,10 +225,10 @@ export default function LookbookPage() {
                 {crossMatch.isPending ? "กำลังจับคู่ข้ามตู้..." : "จับคู่ข้ามตู้ (ช้อปเพิ่ม)"}
               </Button>
             </div>
-            <p className="text-xs text-gray-400">
-              ต้องมีเสื้อผ้าอย่างน้อย 2 ชิ้นในตู้ + ตั้งค่า OPENAI_API_KEY (จัดลุค) และ GOOGLE_AI_API_KEY (รูป try-on)
+            <p className="text-xs text-muted-foreground">
+              เพิ่มเสื้อผ้าอย่างน้อย 2 ชิ้นในตู้ แล้วกด "ให้ AI จัดลุค" — ระบบจะเลือกชุดที่เข้ากับสีผิวและสไตล์ของคุณให้อัตโนมัติ
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               "จับคู่ข้ามตู้" จะนำเสื้อผ้าที่คนอื่นลงขายมาแมตช์กับตู้ของคุณ พร้อมปุ่มช้อปชิ้นที่ต้องซื้อเพิ่ม
             </p>
           </CardContent>
