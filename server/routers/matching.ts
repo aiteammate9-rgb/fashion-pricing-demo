@@ -194,12 +194,13 @@ You may propose MORE THAN ONE outfit per run. Each "look" you return must indepe
 VOICE FOR stylistCommentary — POWER & SOCIAL VALIDATION MODE: เขียนเหมือนบรรณาธิการแฟชั่นระดับ Vogue ที่ประกาศชัยชนะของลุคนี้ให้ผู้ใช้คนนี้โดยเฉพาะ ทุกประโยคเฉียบคม กระชับ หนักแน่น ทำให้ผู้อ่านเห็นภาพตัวเอง "ในทันทีที่ปรากฏตัว" ท่ามกลางผู้คน ทุกคำคุณศัพท์ต้องผูกเหตุผลเชิงเทคนิค (undertone / silhouette / fabric / color theory) ห้ามชมลอย ๆ ห้ามอ้างอำนาจเหนือธรรมชาติ ห้ามสัญญาผลทางดวง การพูดถึง "สายตาคนรอบตัว" คือ social validation เชิงสไตล์ ไม่ใช่คำทำนาย
 
 === IRON RULES (HARD CONSTRAINTS — NEVER BREAK) ===
-1. UNDERTONE FIRST. Use the user's undertone (cool / neutral / warm) as the primary reference. If unknown, default to neutral and say so in skinToneNote.
-2. NO HARSH CLASH NEAR THE FACE. Any garment that clashes severely with the user's undertone is FORBIDDEN as a top, dress or outerwear (anything touching the face/neck). Such a clash may only appear on bottoms, and only when the overall look still satisfies color theory.
-3. SILHOUETTE BALANCE. Top and bottom must balance proportions (volume on top → clean line below, and vice versa; cropped → high rise; long line → grounded hem). Never combine two oversized volumes or two clinging silhouettes without a deliberate, justified exception.
+These rules follow WORLD-CLASS / INTERNATIONAL fashion standards and a strict Personal Color framework. They outrank everything else, including lucky colour.
+1. UNDERTONE FIRST — ANALYSE FROM THE PHOTO. If a profile face photo is attached, FIRST read the user's skin undertone (cool / neutral / warm) directly from that photo and state your read in skinToneNote. Use that as the primary reference for every colour decision. If no photo is attached, use the undertone field; if still unknown, default to neutral and say so.
+2. NO HARSH CLASH NEAR THE FACE. Any garment whose colour clashes severely with the user's undertone is STRICTLY FORBIDDEN as a top, dress or outerwear (anything touching the face/neck). Such a clash is permitted ONLY on a bottom or a small item, and ONLY when the overall look still satisfies colour theory.
+3. SILHOUETTE BALANCE (INTERNATIONAL PROPORTION). Top and bottom must balance proportions (volume on top → clean line below, and vice versa; cropped → high rise; long line → grounded hem). Never combine two oversized volumes or two clinging silhouettes without a deliberate, justified exception.
 4. FABRIC HARMONY. Fabrics must support each other. Never pair fabrics that fight without reason (e.g. chunky knit over slick satin slip; raw denim with delicate evening lace).
-5. LUCKY COLOR MUST BE ACTIVELY CONSIDERED — BUT NEVER OVERRIDE RULES 1–4. If a birth-date lucky color is provided, try to weave it in (primary first, otherwise supporting) on the safest placement: bottom → outerwear → dress/top hero (only if undertone-safe). The AVOID color must never be the dominant or face-adjacent piece. Document the decision in luckyColorNote. If it cannot be reconciled, drop it and explain why.
-6. REJECT FEARLESSLY. Any wardrobe item that cannot meet rules 2–4 within a look MUST go into the top-level rejectedItemIds. A short clean look beats a stuffed one.
+5. PERSONAL COLOR OUTRANKS LUCKY COLOUR. Global fashion + Personal Color ALWAYS win over the day's lucky colour. Try to weave the lucky colour in on the safest placement (bottom → outerwear → hero only if undertone-safe). But if the lucky colour clashes with the undertone, breaks proportion, or no garment carries it well, you MUST NOT force it as a hero or face-adjacent piece — instead recommend it via accessories or shoes in luckyColorNote, or drop it entirely and explain why. The AVOID colour must never be the dominant or face-adjacent piece.
+6. REJECT FEARLESSLY TO INTERNATIONAL STANDARD. Any wardrobe item that cannot meet rules 1–4 at a world-class standard MUST go into the top-level rejectedItemIds — never force a mismatched piece into a look. A short clean look beats a stuffed one.
 7. EXPLAIN YOUR REASONING. faceShapeNote, skinToneNote, luckyColorNote and each outfitBreakdown.why must concretely reference the rules (undertone, silhouette, fabric, color theory) in Thai.
 
 The system handles GARMENTS ONLY (tops, bottoms, dresses, outerwear) — no shoes, no accessories.
@@ -214,6 +215,7 @@ rejectedItemIds is the UNION of items rejected across ALL looks.`;
 - rejectedItemIds (top-level) lists wardrobe ids that fail the iron rules in EVERY look considered.
 
 # User Profile
+- Profile face photo: ${profile?.profilePhotoUrl && /^https?:\/\//i.test(profile.profilePhotoUrl) ? "ATTACHED below — ANALYSE the undertone from it first (Rule 1)" : "(not provided — fall back to the undertone field)"}
 - Face shape: ${profile?.faceShape ?? "(assume oval if unknown)"}
 - Skin tone: ${profile?.skinTone ?? "(unknown)"}
 - Undertone: ${profile?.undertone ?? "(unknown — most important attribute; assume neutral and note it)"}
@@ -247,6 +249,18 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
         | { type: "text"; text: string }
         | { type: "image_url"; image_url: { url: string; detail?: "auto" | "low" | "high" } }
       > = [{ type: "text", text: userPrompt }];
+
+      // Attach the user's face photo FIRST so the stylist can read the undertone (Rule 1).
+      if (profile?.profilePhotoUrl && /^https?:\/\//i.test(profile.profilePhotoUrl)) {
+        userContent.push({
+          type: "text",
+          text: "User's face photo — analyse skin undertone (cool/neutral/warm) from this before choosing colours:",
+        });
+        userContent.push({
+          type: "image_url",
+          image_url: { url: profile.profilePhotoUrl, detail: "low" },
+        });
+      }
 
       for (const it of itemsForLLM) {
         // Only attach images that are real http(s) URLs. Skip base64 data: URIs
@@ -564,12 +578,13 @@ You are styling a SHOPPABLE look: the user already OWNS some garments, and OTHER
 Each "look" must independently satisfy ALL iron rules below — no group discounts.
 
 === IRON RULES (HARD CONSTRAINTS — NEVER BREAK) ===
-1. UNDERTONE FIRST. Use the user's undertone (cool/neutral/warm) as the primary reference; default neutral and say so if unknown.
-2. NO HARSH CLASH NEAR THE FACE. A garment clashing severely with the undertone is forbidden as top/dress/outerwear; it may only appear on bottoms when overall color theory still holds.
-3. SILHOUETTE BALANCE. Top and bottom must balance proportions.
-4. FABRIC HARMONY. Fabrics must support each other.
-5. LUCKY COLOR ACTIVELY CONSIDERED but NEVER overrides 1–4. Safest placement: bottom → outerwear → hero (only if undertone-safe). Document in luckyColorNote.
-6. REJECT FEARLESSLY into rejectedItemIds. A short clean look beats a stuffed one.
+World-class / international fashion standards + a strict Personal Color framework. They outrank lucky colour.
+1. UNDERTONE FIRST — ANALYSE FROM THE PHOTO. If a profile face photo is attached, read the user's undertone (cool/neutral/warm) from it first and state it in skinToneNote; use it as the primary colour reference. Otherwise use the undertone field; default neutral if unknown.
+2. NO HARSH CLASH NEAR THE FACE. A garment clashing severely with the undertone is forbidden as top/dress/outerwear; it may only appear on a bottom or small item when overall color theory still holds.
+3. SILHOUETTE BALANCE (international proportion). Top and bottom must balance proportions.
+4. FABRIC HARMONY. Fabrics must support each other; never pair fabrics that fight without reason.
+5. PERSONAL COLOR OUTRANKS LUCKY COLOUR. Weave lucky colour in only on a safe placement (bottom → outerwear → hero if undertone-safe). If it clashes with the undertone, breaks proportion, or no garment fits — do NOT force it as a hero/face piece; recommend it via accessories or shoes in luckyColorNote, or drop it and explain.
+6. REJECT FEARLESSLY TO INTERNATIONAL STANDARD. Any item that cannot meet rules 1–4 at a world-class standard goes into rejectedItemIds — never force it in.
 7. EXPLAIN reasoning in Thai, concretely referencing the rules.
 
 VOICE FOR stylistCommentary — POWER & SOCIAL VALIDATION MODE: เขียนเหมือนบรรณาธิการแฟชั่นระดับ Vogue ทุกประโยคเฉียบคม ผูกเหตุผลเชิงเทคนิค (undertone/silhouette/fabric/color theory) ชี้ให้เห็นว่าชิ้นที่ "ควรซื้อเพิ่ม" ปลดล็อกตู้เสื้อผ้าเดิมอย่างไร ห้ามชมลอย ๆ ห้ามอ้างอำนาจเหนือธรรมชาติ
@@ -583,6 +598,7 @@ Each item has "owned": true (already in the user's wardrobe) or false (for sale 
 ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
 
 # User Profile
+- Profile face photo: ${profile?.profilePhotoUrl && /^https?:\/\//i.test(profile.profilePhotoUrl) ? "ATTACHED below — ANALYSE the undertone from it first (Rule 1)" : "(not provided — fall back to the undertone field)"}
 - Face shape: ${profile?.faceShape ?? "(assume oval if unknown)"}
 - Skin tone: ${profile?.skinTone ?? "(unknown)"}
 - Undertone: ${profile?.undertone ?? "(unknown — assume neutral and note it)"}
@@ -610,6 +626,18 @@ ${occasion}
         | { type: "text"; text: string }
         | { type: "image_url"; image_url: { url: string; detail?: "auto" | "low" | "high" } }
       > = [{ type: "text", text: userPrompt }];
+
+      // Attach the user's face photo first for undertone analysis (Rule 1).
+      if (profile?.profilePhotoUrl && /^https?:\/\//i.test(profile.profilePhotoUrl)) {
+        userContent.push({
+          type: "text",
+          text: "User's face photo — analyse skin undertone (cool/neutral/warm) from this before choosing colours:",
+        });
+        userContent.push({
+          type: "image_url",
+          image_url: { url: profile.profilePhotoUrl, detail: "low" },
+        });
+      }
 
       for (const it of itemsForLLM) {
         if (!it.imageUrl || !/^https?:\/\//i.test(it.imageUrl)) continue;
