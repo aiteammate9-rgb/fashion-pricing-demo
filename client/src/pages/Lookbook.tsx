@@ -382,10 +382,71 @@ export default function LookbookPage() {
                 )}
 
                 {look.stylistCommentary && (
-                  <p className="text-sm text-gray-700 leading-relaxed">{look.stylistCommentary}</p>
+                  <div className="rounded-xl bg-warm-50 border border-warm-200 px-4 py-3">
+                    <p className="text-[11px] font-medium text-teal-700 mb-1.5 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" /> คำวิจารณ์โดยสไตลิสต์
+                    </p>
+                    <p className="text-sm text-foreground leading-7">{look.stylistCommentary}</p>
+                  </div>
                 )}
 
                 <ColorSwatches palette={look.colorPalette || []} />
+
+                {/* Garments used in this look — clickable to view */}
+                {Array.isArray(look.usedItems) && look.usedItems.length > 0 && (
+                  <div className="border-t border-dashed border-gray-200 pt-3">
+                    <p className="text-xs font-medium text-gray-700 mb-2 flex items-center gap-1">
+                      <Shirt className="w-3.5 h-3.5" /> เสื้อผ้าในลุคนี้ ({look.usedItems.length})
+                    </p>
+                    <div className="space-y-2.5">
+                      {look.usedItems.map((u: any) => {
+                        const bd = Array.isArray(look.outfitBreakdown)
+                          ? look.outfitBreakdown.find((b: any) => b.itemId === u.id)
+                          : null;
+                        const clickable = u.imageUrl && /^https?:\/\//i.test(u.imageUrl);
+                        return (
+                          <div key={u.id} className="flex items-start gap-3">
+                            {clickable ? (
+                              <button
+                                type="button"
+                                onClick={() => window.open(u.imageUrl, "_blank", "noopener")}
+                                className="shrink-0"
+                                aria-label={`ดูรูป ${u.name}`}
+                              >
+                                <img
+                                  src={u.imageUrl}
+                                  alt={u.name}
+                                  loading="lazy"
+                                  className="w-14 h-14 rounded-lg object-cover border border-black/5 hover:opacity-80 transition-opacity"
+                                />
+                              </button>
+                            ) : (
+                              <div className="w-14 h-14 rounded-lg bg-warm-100 flex items-center justify-center shrink-0">
+                                <Shirt className="w-5 h-5 text-warm-200" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-foreground">
+                                {u.name}
+                                {bd?.role ? <span className="text-muted-foreground"> · {bd.role}</span> : null}
+                              </p>
+                              {bd?.why && (
+                                <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+                                  {bd.why}
+                                </p>
+                              )}
+                              {u.owned === false && u.priceBaht != null && (
+                                <p className="text-[11px] text-emerald-700 mt-0.5">
+                                  ฿{Number(u.priceBaht).toLocaleString()} · ซื้อเพิ่ม
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {look.luckyColorNote && (
                   <p className="text-xs text-amber-700 bg-amber-50 rounded-md px-3 py-2">

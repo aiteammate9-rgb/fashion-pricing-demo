@@ -455,6 +455,18 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
           console.warn("[matching] try-on image failed:", (e as Error)?.message ?? e);
         }
 
+        // Garments actually used in this look (for display in the lookbook card).
+        const usedItems = items
+          .filter(i => selectedIds.includes(i.id))
+          .map(i => ({
+            id: i.id,
+            name: [i.brand, i.category].filter(Boolean).join(" ").trim() || `item ${i.id}`,
+            category: i.category,
+            color: i.color,
+            imageUrl: i.imageUrl,
+          }));
+        const analysisWithItems = { ...look, usedItems };
+
         const inserted = await db
           .insert(outfitRecommendations)
           .values({
@@ -462,7 +474,7 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
             title: look.title || "Curated Look",
             occasion: look.occasion || occasion,
             itemIds: selectedIds,
-            analysis: look,
+            analysis: analysisWithItems,
             luckyColors: luckyColor ?? null,
             tryOnImageUrl,
             source: "own",
@@ -470,7 +482,7 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
           .$returningId();
 
         const newId = Array.isArray(inserted) ? (inserted[0] as any)?.id : undefined;
-        savedLooks.push({ id: newId, matchingGroup: groupLabel, tryOnImageUrl, ...look });
+        savedLooks.push({ id: newId, matchingGroup: groupLabel, tryOnImageUrl, ...analysisWithItems });
       }
 
       // Items rejected in EVERY look (and never used) → no_pair.
@@ -830,7 +842,19 @@ ${occasion}
           console.warn("[matching] cross-user try-on image failed:", (e as Error)?.message ?? e);
         }
 
-        const analysisWithBuy = { ...look, buyItems };
+        const usedItems = selectedIds
+          .map(id => itemById.get(id))
+          .filter(Boolean)
+          .map(i => ({
+            id: i!.id,
+            name: i!.name,
+            category: i!.category,
+            color: i!.color,
+            imageUrl: i!.imageUrl,
+            owned: i!.owned,
+            priceBaht: i!.priceBaht,
+          }));
+        const analysisWithBuy = { ...look, buyItems, usedItems };
 
         const inserted = await db
           .insert(outfitRecommendations)
