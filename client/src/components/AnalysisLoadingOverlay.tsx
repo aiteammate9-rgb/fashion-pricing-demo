@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Brain, Calculator, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { Camera, Brain, Calculator, CheckCircle2, Loader2, Sparkles, UserCircle } from "lucide-react";
 
 const FASHION_TIPS = [
   "เสื้อโทนเย็น (ฟ้า เทา ชมพูอมฟ้า) เข้ากับผิวอันเดอร์โทนเย็น",
@@ -184,6 +184,18 @@ export default function AnalysisLoadingOverlay({ currentStep, visible }: Props) 
         <p className="text-center text-[11px] text-muted-foreground mt-3">
           {currentStep === "done" ? "เสร็จแล้ว!" : "กำลังประมวลผล ใช้เวลาสักครู่"}
         </p>
+
+        {/* Edit profile without cancelling the in-progress analysis (opens a new tab) */}
+        {currentStep !== "done" && (
+          <button
+            type="button"
+            onClick={() => window.open("/profile", "_blank", "noopener")}
+            className="mx-auto mt-2 flex items-center gap-1.5 text-[11px] text-teal-700 hover:underline"
+          >
+            <UserCircle className="w-3.5 h-3.5" />
+            แก้โปรไฟล์ระหว่างรอ (เปิดแท็บใหม่ ไม่ยกเลิกการประเมิน)
+          </button>
+        )}
       </motion.div>
     </motion.div>
   );
