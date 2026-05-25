@@ -22,4 +22,7 @@ export const ENV = {
   // LINE Messaging API (push flex cards / order notifications).
   // Set LINE_MESSAGING_TOKEN in the environment (never commit it).
   lineMessagingToken: process.env.LINE_MESSAGING_TOKEN ?? "",
+  // Shared cookie domain so login works across sheowa.com + app.sheowa.com.
+  // Set COOKIE_DOMAIN=.sheowa.com in production; leave empty for localhost.
+  cookieDomain: process.env.COOKIE_DOMAIN ?? "",
 };

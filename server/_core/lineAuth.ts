@@ -44,6 +44,8 @@ function sessionCookieOptions(req: Request) {
     sameSite: (secure ? "none" : "lax") as "none" | "lax",
     secure,
     maxAge: SESSION_MS,
+    // Share the cookie across sheowa.com + app.sheowa.com when configured.
+    domain: ENV.cookieDomain || undefined,
   };
 }
 
@@ -148,7 +150,7 @@ export function registerLineRoutes(app: Express) {
   });
 
   app.get("/api/line/logout", (_req: Request, res: Response) => {
-    res.clearCookie(COOKIE_NAME, { path: "/" });
+    res.clearCookie(COOKIE_NAME, { path: "/", domain: ENV.cookieDomain || undefined });
     res.redirect("/");
   });
 }

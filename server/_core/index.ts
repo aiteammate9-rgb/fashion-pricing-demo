@@ -5,6 +5,7 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerLineRoutes } from "./lineAuth";
+import { registerProfileApi } from "./profileApi";
 import { registerStorageProxy } from "./storageProxy";
 import { registerEvaluateStream } from "../routes/evaluate-stream";
 import { appRouter } from "../routers";
@@ -51,6 +52,7 @@ async function startServer() {
     const origin = req.headers.origin;
     if (origin && (allowedOrigins.has(origin) || process.env.CORS_ORIGINS === "*")) {
       res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader("Vary", "Origin");
     }
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -84,6 +86,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerLineRoutes(app);
+  registerProfileApi(app);
   registerEvaluateStream(app);
   // tRPC API
   app.use(
