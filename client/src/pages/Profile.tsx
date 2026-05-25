@@ -29,6 +29,22 @@ const UNDERTONES: Array<{ value: string; label: string }> = [
   { value: "neutral", label: "โทนกลาง (Neutral)" },
   { value: "warm", label: "โทนอุ่น (Warm)" },
 ];
+const STYLE_OPTIONS = [
+  "มินิมอล",
+  "เกาหลี",
+  "วินเทจ",
+  "สตรีท",
+  "หวานละมุน",
+  "เท่ / ทอมบอย",
+  "ลำลอง",
+  "ทางการ",
+  "โบฮีเมียน",
+  "ลักชัวรี",
+  "สปอร์ต",
+  "คลาสสิก",
+  "ออฟฟิศ",
+  "อินดี้ / อาร์ต",
+];
 
 function fileToBase64(file: File): Promise<{ b64: string; mime: string }> {
   return new Promise((resolve, reject) => {
@@ -53,9 +69,7 @@ export default function ProfilePage() {
   const [birthDate, setBirthDate] = useState("");
   const [skinTone, setSkinTone] = useState("");
   const [undertone, setUndertone] = useState("");
-  const [heightCm, setHeightCm] = useState("");
-  const [weightKg, setWeightKg] = useState("");
-  const [preferredStyles, setPreferredStyles] = useState("");
+  const [styles, setStyles] = useState<string[]>([]);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photo, setPhoto] = useState<{ b64: string; mime: string } | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -65,9 +79,11 @@ export default function ProfilePage() {
     setBirthDate(profile.data.birthDate ?? "");
     setSkinTone(profile.data.skinTone ?? "");
     setUndertone(profile.data.undertone ?? "");
-    setHeightCm(profile.data.heightCm ? String(profile.data.heightCm) : "");
-    setWeightKg(profile.data.weightKg ? String(profile.data.weightKg) : "");
-    setPreferredStyles(profile.data.preferredStyles ?? "");
+    setStyles(
+      profile.data.preferredStyles
+        ? profile.data.preferredStyles.split(",").map((s) => s.trim()).filter(Boolean)
+        : [],
+    );
     setLoaded(true);
   }
 
@@ -92,14 +108,15 @@ export default function ProfilePage() {
     }
   };
 
+  const toggleStyle = (s: string) =>
+    setStyles((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+
   const onSave = () => {
     upsert.mutate({
       birthDate: birthDate || null,
       skinTone: (skinTone || null) as any,
       undertone: (undertone || null) as any,
-      heightCm: heightCm ? Number(heightCm) : null,
-      weightKg: weightKg ? Number(weightKg) : null,
-      preferredStyles: preferredStyles || null,
+      preferredStyles: styles.length ? styles.join(", ") : null,
       ...(photo ? { profilePhotoBase64: photo.b64, profilePhotoMimeType: photo.mime } : {}),
     });
   };
@@ -173,30 +190,6 @@ export default function ProfilePage() {
               />
             </div>
 
-            {/* Height / weight */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">ส่วนสูง (cm)</Label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  value={heightCm}
-                  onChange={(e) => setHeightCm(e.target.value)}
-                  placeholder="เช่น 160"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">น้ำหนัก (kg)</Label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  value={weightKg}
-                  onChange={(e) => setWeightKg(e.target.value)}
-                  placeholder="เช่น 50"
-                />
-              </div>
-            </div>
-
             {/* Skin tone / undertone */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -231,16 +224,33 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Preferred styles */}
+            {/* Preferred styles — multi-select chips */}
             <div className="space-y-1.5">
-              <Label className="text-xs">สไตล์ที่ชอบ</Label>
-              <Input
-                type="text"
-                value={preferredStyles}
-                onChange={(e) => setPreferredStyles(e.target.value)}
-                placeholder="เช่น มินิมอล, เกาหลี, วินเทจ"
-              />
+              <Label className="text-xs">สไตล์ที่ชอบ (เลือกได้หลายอัน)</Label>
+              <div className="flex flex-wrap gap-2">
+                {STYLE_OPTIONS.map((s) => {
+                  const on = styles.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleStyle(s)}
+                      className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                        on
+                          ? "bg-teal-600 border-teal-600 text-white"
+                          : "bg-card border-input text-foreground hover:border-teal-300"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            <p className="text-[11px] text-muted-foreground">
+              ไม่ต้องกรอกรูปร่าง/ส่วนสูง — AI จะประเมินสัดส่วนและเจนลุคให้เองจากรูปหน้าและสไตล์ที่เลือก
+            </p>
 
             <Button
               className="w-full bg-teal-600 hover:bg-teal-700"
