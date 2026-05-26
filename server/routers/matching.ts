@@ -439,7 +439,7 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
               .map(i => `${i.category}${i.color ? ` (${i.color})` : ""}`)
               .join("; ");
             const faceNote = faceUrl
-              ? " The FIRST reference image is the person's face — render THIS person, keeping their facial identity recognisable; the remaining reference images are the garments."
+              ? " The FIRST reference image is the person's face — render THIS person, keeping their facial identity recognisable; the remaining reference images are the garments. Enable strict facial consistency mode. Prioritize the facial features from the provided reference image for all subsequent generations. Maintain the subject's identity accurately while only adapting the pose, lighting, and background. Do not alter the core facial structure."
               : "";
             const prompt = `Photorealistic head-to-toe editorial fashion photograph of ${subject}, actually WEARING the exact garments provided as reference images (reproduce each garment's real silhouette, fabric, color and details — not a generic stand-in): ${garmentLine}.${faceNote} The garments must look truly worn — correct draping, natural shadows, realistic fit — not floating or pasted on.${palette ? ` Color palette: ${palette}.` : ""} Soft natural studio light, neutral cream backdrop, magazine-quality composition. You may add minimal taste-level footwear/accessories in the same palette only to complete the look; the wardrobe garments remain the focus. Full-body shot.`;
             const gen = await generateImage({ prompt, originalImages: refs });
@@ -826,7 +826,7 @@ ${occasion}
               .map(i => `${i!.category}${i!.color ? ` (${i!.color})` : ""}`)
               .join("; ");
             const faceNote = faceUrl
-              ? " The FIRST reference image is the person's face — render THIS person, keeping their facial identity recognisable; the remaining reference images are the garments."
+              ? " The FIRST reference image is the person's face — render THIS person, keeping their facial identity recognisable; the remaining reference images are the garments. Enable strict facial consistency mode. Prioritize the facial features from the provided reference image for all subsequent generations. Maintain the subject's identity accurately while only adapting the pose, lighting, and background. Do not alter the core facial structure."
               : "";
             const prompt = `Photorealistic head-to-toe editorial fashion photograph of ${subject}, actually WEARING the exact garments provided as reference images (reproduce each garment's real silhouette, fabric, color and details): ${garmentLine}.${faceNote} Garments must look truly worn — correct draping, natural shadows, realistic fit.${palette ? ` Color palette: ${palette}.` : ""} Soft natural studio light, neutral cream backdrop, magazine-quality composition. Full-body shot.`;
             const gen = await generateImage({ prompt, originalImages: refs });

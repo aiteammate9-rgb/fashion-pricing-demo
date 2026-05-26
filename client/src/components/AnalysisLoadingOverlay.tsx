@@ -2,9 +2,9 @@
  * AnalysisLoadingOverlay – แสดงสถานะ step-by-step ระหว่าง AI ประมวลผล
  * มี 4 ขั้นตอน: อัปโหลดรูป → วิเคราะห์ AI → คำนวณราคา → สร้างผลลัพธ์
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Brain, Calculator, CheckCircle2, Loader2, Sparkles, UserCircle } from "lucide-react";
+import { Camera, Brain, Calculator, CheckCircle2, Loader2, Sparkles, UserCircle, X } from "lucide-react";
 
 const FASHION_TIPS = [
   "เสื้อโทนเย็น (ฟ้า เทา ชมพูอมฟ้า) เข้ากับผิวอันเดอร์โทนเย็น",
@@ -24,6 +24,8 @@ export type AnalysisStep = "uploading" | "analyzing" | "consensus" | "pricing" |
 interface Props {
   currentStep: AnalysisStep;
   visible: boolean;
+  onClose?: () => void;
+  footerNote?: ReactNode;
 }
 
 const STEPS = [
@@ -38,7 +40,7 @@ function getStepIndex(step: AnalysisStep): number {
   return STEPS.findIndex((s) => s.key === step);
 }
 
-export default function AnalysisLoadingOverlay({ currentStep, visible }: Props) {
+export default function AnalysisLoadingOverlay({ currentStep, visible, onClose, footerNote }: Props) {
   const [tipIdx, setTipIdx] = useState(0);
 
   useEffect(() => {
@@ -64,8 +66,19 @@ export default function AnalysisLoadingOverlay({ currentStep, visible }: Props) 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-xl max-w-sm w-full mx-4"
+        className="relative bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-xl max-w-sm w-full mx-4"
       >
+        {onClose && currentStep !== "done" && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="ปิดหน้านี้"
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-warm-100 hover:bg-warm-200 flex items-center justify-center"
+          >
+            <X className="w-4 h-4 text-foreground" />
+          </button>
+        )}
+
         {/* Animated Brain Icon */}
         <div className="flex justify-center mb-6">
           <motion.div
@@ -195,6 +208,10 @@ export default function AnalysisLoadingOverlay({ currentStep, visible }: Props) 
             <UserCircle className="w-3.5 h-3.5" />
             แก้โปรไฟล์ระหว่างรอ (เปิดแท็บใหม่ ไม่ยกเลิกการประเมิน)
           </button>
+        )}
+
+        {footerNote && currentStep !== "done" && (
+          <div className="mt-3">{footerNote}</div>
         )}
       </motion.div>
     </motion.div>

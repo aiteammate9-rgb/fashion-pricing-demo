@@ -53,6 +53,7 @@ export default function LookbookPage() {
   const [selectedOutfit, setSelectedOutfit] = useState<any | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [overlayDismissed, setOverlayDismissed] = useState(false);
 
   const profile = trpc.profile.me.useQuery(undefined, { enabled: !!user });
   const outfits = trpc.outfits.list.useQuery(undefined, { enabled: !!user });
@@ -143,8 +144,23 @@ export default function LookbookPage() {
   return (
     <div className="min-h-screen bg-background px-4 py-8">
       <AnalysisLoadingOverlay
-        visible={generate.isPending || crossMatch.isPending}
+        visible={(generate.isPending || crossMatch.isPending) && !overlayDismissed}
         currentStep="analyzing"
+        onClose={() => setOverlayDismissed(true)}
+        footerNote={
+          <div className="text-center rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5">
+            <p className="text-[11px] text-emerald-800 leading-relaxed">
+              ปิดหน้านี้แล้วใช้งานต่อได้เลย — เมื่อรูปลุคเสร็จ เราจะส่งการ์ดเข้า LINE ให้อัตโนมัติ ไปดูในไลน์ได้โดยไม่ต้องรอตรงนี้
+            </p>
+            <button
+              type="button"
+              onClick={() => setOverlayDismissed(true)}
+              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-full px-4 py-1.5"
+            >
+              ปิดหน้านี้ ทำอย่างอื่นต่อ
+            </button>
+          </div>
+        }
       />
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
@@ -231,12 +247,10 @@ export default function LookbookPage() {
               </label>
               <Button
                 disabled={generate.isPending}
-                onClick={() =>
-                  generate.mutate({
-                    maxLooks,
-                    occasion: occasion.trim() || undefined,
-                  })
-                }
+                onClick={() => {
+                  setOverlayDismissed(false);
+                  generate.mutate({ maxLooks, occasion: occasion.trim() || undefined });
+                }}
               >
                 <Wand2 className="w-4 h-4 mr-2" />
                 {generate.isPending ? "กำลังจัดลุค..." : "ให้ AI จัดลุค"}
@@ -244,12 +258,10 @@ export default function LookbookPage() {
               <Button
                 variant="outline"
                 disabled={crossMatch.isPending}
-                onClick={() =>
-                  crossMatch.mutate({
-                    maxLooks,
-                    occasion: occasion.trim() || undefined,
-                  })
-                }
+                onClick={() => {
+                  setOverlayDismissed(false);
+                  crossMatch.mutate({ maxLooks, occasion: occasion.trim() || undefined });
+                }}
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 {crossMatch.isPending ? "กำลังจับคู่ข้ามตู้..." : "จับคู่ข้ามตู้ (ช้อปเพิ่ม)"}
