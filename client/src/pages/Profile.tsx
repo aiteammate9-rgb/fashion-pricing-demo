@@ -11,7 +11,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, LogIn, Save, Camera, Sparkles, UserCircle, Home } from "lucide-react";
 import { toast } from "sonner";
@@ -187,10 +186,12 @@ export default function ProfilePage() {
             {/* Birthdate */}
             <div className="space-y-1.5">
               <Label className="text-xs">วันเดือนปีเกิด (สำหรับสีนำโชค)</Label>
-              <Input
+              <input
                 type="date"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
+                max="2025-12-31"
+                className="w-full h-11 border border-input rounded-md px-3 text-base bg-card text-foreground"
               />
             </div>
 

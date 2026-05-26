@@ -255,7 +255,7 @@ export default function Home() {
     );
 
     if (itemsWithImages.length === 0) {
-      toast.error("กรุณาอัปโหลดรูปอย่างน้อย 1 รูป");
+      toast.info("เพิ่มรูปเสื้อผ้าอย่างน้อย 1 รูปก่อนนะคะ");
       return;
     }
 
@@ -437,7 +437,7 @@ export default function Home() {
   const handleSaveToWardrobe = useCallback(async (index: number) => {
     const item = resultItems[index];
     if (!item || !user) {
-      toast.error("กรุณาเข้าสู่ระบบเพื่อบันทึกเข้าตู้เสื้อผ้า");
+      toast.info("เข้าสู่ระบบก่อนเพื่อเก็บเสื้อผ้าเข้าตู้นะคะ");
       return;
     }
 
