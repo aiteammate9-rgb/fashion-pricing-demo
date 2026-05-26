@@ -25,6 +25,7 @@ import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag, Check, T
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Link } from "wouter";
+import AnalysisLoadingOverlay from "@/components/AnalysisLoadingOverlay";
 
 function ColorSwatches({ palette }: { palette: Array<{ name: string; hex: string }> }) {
   if (!Array.isArray(palette) || palette.length === 0) return null;
@@ -141,6 +142,10 @@ export default function LookbookPage() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-8">
+      <AnalysisLoadingOverlay
+        visible={generate.isPending || crossMatch.isPending}
+        currentStep="analyzing"
+      />
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <Link href="/">

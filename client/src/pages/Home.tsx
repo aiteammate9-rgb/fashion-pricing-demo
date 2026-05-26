@@ -1162,17 +1162,11 @@ export default function Home() {
                         }`}
                       >
                         <div className="flex items-center justify-center gap-2 mb-1">
-                          <p className="text-xs text-warm-800/70">ราคาแนะนำตามตลาด</p>
+                          <p className="text-xs text-warm-800/70">ราคาที่แนะนำ</p>
                           {activeResult.isRefining && (
                             <span className="inline-flex items-center gap-1 text-[10px] text-amber-600">
                               <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                              refining...
-                            </span>
-                          )}
-                          {activeResult.isRefined && (
-                            <span className="inline-flex items-center gap-1 text-[10px] text-teal-600 font-medium">
-                              <Sparkles className="w-2.5 h-2.5" />
-                              AI {activeResult.agentCount} ตัวยืนยัน
+                              กำลังคิดราคาที่ดีที่สุด...
                             </span>
                           )}
                         </div>
@@ -1187,24 +1181,8 @@ export default function Home() {
                           ฿{activeResult.recommendedPrice.toLocaleString()}
                         </motion.p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          ช่วงราคาตลาด ฿{activeResult.marketMin.toLocaleString()} – ฿{activeResult.marketMax.toLocaleString()}
+                          ราคาขายที่เหมาะ ฿{activeResult.marketMin.toLocaleString()} – ฿{activeResult.marketMax.toLocaleString()}
                         </p>
-                        {/* Thai Market Factor Badge */}
-                        {activeResult.thaiMarketInfo && activeResult.thaiMarketInfo.discountPercent > 0 && (
-                          <div className="mt-2 pt-2 border-t border-warm-200/50">
-                            <div className="flex items-center justify-center gap-2">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[10px] text-blue-700 font-medium">
-                                🇹🇭 Thai Market
-                              </span>
-                              <span className="text-[10px] text-muted-foreground">
-                                ราคาสากล ฿{activeResult.thaiMarketInfo.internationalPrice.toLocaleString()} → ปรับลด {activeResult.thaiMarketInfo.discountPercent}%
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                              {activeResult.thaiMarketInfo.explanation}
-                            </p>
-                          </div>
-                        )}
                       </motion.div>
 
                       {/* Sellability Gauge */}
