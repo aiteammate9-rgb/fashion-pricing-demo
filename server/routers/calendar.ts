@@ -17,13 +17,13 @@
  */
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { and, desc, eq, like } from "drizzle-orm";
+import { and, desc, eq, like, gte, lte } from "drizzle-orm";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { outfitCalendar, outfitRecommendations } from "../../drizzle/schema";
 import { luckyNoteForDate } from "../luckyColor";
 import { fetchWeatherNotes } from "../_core/weather";
-import { pushToUser, outfitMessage, calendarMessage } from "../_core/lineMessaging";
+import { pushToUser, weekFlexMessage } from "../_core/lineMessaging";
 
 const APP_BASE_URL = (process.env.APP_PUBLIC_URL || "https://fashion-pricing-demo.onrender.com").replace(/\/+$/, "");
 const APP_CALENDAR_URL = `${APP_BASE_URL}/calendar`;
@@ -31,6 +31,12 @@ const APP_CALENDAR_URL = `${APP_BASE_URL}/calendar`;
 /** Bangkok-local "today" as yyyy-mm-dd (en-CA gives ISO order). */
 function bkkToday(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+}
+
+function addDaysISO(iso: string, n: number): string {
+  const d = new Date(iso + "T00:00:00+07:00");
+  d.setDate(d.getDate() + n);
+  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
 }
 
 const monthRe = /^\d{4}-\d{2}$/;
@@ -115,35 +121,41 @@ export const calendarRouter = router({
         assigned++;
       }
 
-      // Push to LINE right away (concept: matched → straight to LINE):
-      //  1) today's look card, 2) a button that opens the full calendar.
-      const lineMessages: any[] = [];
-      if (days.includes(today)) {
-        const todayLook = looks[days.indexOf(today) % looks.length];
-        const analysis: any = todayLook.analysis ?? {};
-        lineMessages.push(
-          outfitMessage({
-            title: `วันนี้ใส่: ${todayLook.title || "ลุคที่จัดให้"}`,
-            occasion: luckyNoteForDate(today),
-            imageUrl: todayLook.tryOnImageUrl,
-            commentary: analysis.stylistCommentary,
-            appUrl: APP_CALENDAR_URL,
-          }),
-        );
-      }
-      lineMessages.push(
-        calendarMessage({
-          calendarUrl: APP_CALENDAR_URL,
-          title: "จัดปฏิทินแต่งตัวให้แล้ว",
-          subtitle: `วางลุคไว้ ${assigned} วัน — กดดูทั้งเดือนได้เลย`,
-        }),
-      );
-      void pushToUser(ctx.user.id, lineMessages);
-      if (days.includes(today)) {
+      // Push to LINE right away (format A): a 7-day Flex carousel of the coming
+      // week, each day with its outfit thumbnail + lucky note + open-calendar button.
+      const weekEnd = addDaysISO(today, 6);
+      const weekRows = await db
+        .select({
+          date: outfitCalendar.date,
+          luckyNote: outfitCalendar.luckyNote,
+          title: outfitRecommendations.title,
+          imageUrl: outfitRecommendations.tryOnImageUrl,
+        })
+        .from(outfitCalendar)
+        .leftJoin(outfitRecommendations, eq(outfitCalendar.outfitId, outfitRecommendations.id))
+        .where(
+          and(
+            eq(outfitCalendar.userId, ctx.user.id),
+            gte(outfitCalendar.date, today),
+            lte(outfitCalendar.date, weekEnd),
+          ),
+        )
+        .orderBy(outfitCalendar.date);
+      if (weekRows.length) {
+        void pushToUser(ctx.user.id, [
+          weekFlexMessage({ days: weekRows, calendarUrl: APP_CALENDAR_URL }),
+        ]);
+        // Mark the days we just surfaced as pushed so the daily cron won't repeat them.
         await db
           .update(outfitCalendar)
           .set({ pushed: 1 })
-          .where(and(eq(outfitCalendar.userId, ctx.user.id), eq(outfitCalendar.date, today)));
+          .where(
+            and(
+              eq(outfitCalendar.userId, ctx.user.id),
+              gte(outfitCalendar.date, today),
+              lte(outfitCalendar.date, weekEnd),
+            ),
+          );
       }
 
       return { month, assigned, looksUsed: looks.length };

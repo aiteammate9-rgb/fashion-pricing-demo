@@ -17,7 +17,7 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import { ENV } from "./env";
 import { getDb } from "../db";
 import { outfitCalendar, outfitRecommendations } from "../../drizzle/schema";
-import { pushToUser, outfitMessage, calendarMessage } from "./lineMessaging";
+import { pushToUser, outfitMessage, weekFlexMessage } from "./lineMessaging";
 import { luckyNoteForDate } from "../luckyColor";
 
 const APP_BASE_URL = (process.env.APP_PUBLIC_URL || "https://fashion-pricing-demo.onrender.com").replace(/\/+$/, "");
@@ -89,23 +89,31 @@ export function registerCronApi(app: Express) {
       and(eq(outfitCalendar.date, today), eq(outfitCalendar.pushed, 0)),
     );
 
-    // Every Monday: also send the "open calendar" button to users who have a
-    // plan in the coming week, so they can review the whole week in one tap.
+    // Every Monday: send a 7-day Flex carousel (format A) to users who have a
+    // plan in the coming week, so they can swipe through the whole week in chat.
     let weekly = 0;
     if (bkkWeekday(today) === 1) {
       const weekEnd = addDaysISO(today, 6);
       const upcoming = await db
-        .select({ userId: outfitCalendar.userId })
+        .select({
+          userId: outfitCalendar.userId,
+          date: outfitCalendar.date,
+          luckyNote: outfitCalendar.luckyNote,
+          title: outfitRecommendations.title,
+          imageUrl: outfitRecommendations.tryOnImageUrl,
+        })
         .from(outfitCalendar)
-        .where(and(gte(outfitCalendar.date, today), lte(outfitCalendar.date, weekEnd)));
-      const userIds = Array.from(new Set(upcoming.map(u => u.userId)));
-      for (const uid of userIds) {
+        .leftJoin(outfitRecommendations, eq(outfitCalendar.outfitId, outfitRecommendations.id))
+        .where(and(gte(outfitCalendar.date, today), lte(outfitCalendar.date, weekEnd)))
+        .orderBy(outfitCalendar.date);
+      const byUser = new Map<number, { date: string; title: string | null; imageUrl: string | null; luckyNote: string | null }[]>();
+      for (const r of upcoming) {
+        if (!byUser.has(r.userId)) byUser.set(r.userId, []);
+        byUser.get(r.userId)!.push({ date: r.date, title: r.title, imageUrl: r.imageUrl, luckyNote: r.luckyNote });
+      }
+      for (const [uid, daysArr] of Array.from(byUser.entries())) {
         const ok = await pushToUser(uid, [
-          calendarMessage({
-            calendarUrl: APP_CALENDAR_URL,
-            title: "ปฏิทินแต่งตัวสัปดาห์นี้",
-            subtitle: "ดูลุค 7 วันข้างหน้า + สีมงคลรายวัน",
-          }),
+          weekFlexMessage({ days: daysArr, calendarUrl: APP_CALENDAR_URL }),
         ]);
         if (ok) weekly++;
       }

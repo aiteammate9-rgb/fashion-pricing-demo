@@ -164,6 +164,77 @@ export function calendarMessage(opts: { calendarUrl: string; title?: string; sub
   return { type: "flex", altText: "ปฏิทินแต่งตัวของคุณ", contents: bubble };
 }
 
+/**
+ * Format A — a horizontal Flex carousel of the next few days. Each bubble is one
+ * day with its outfit thumbnail, title and lucky-color note, plus a button that
+ * opens the full calendar. Used on "จัดชุดทั้งเดือน" and every Monday.
+ */
+export function weekFlexMessage(opts: {
+  days: { date: string; title: string | null; imageUrl: string | null; luckyNote: string | null }[];
+  calendarUrl: string;
+}) {
+  const fmt = (iso: string) => {
+    try {
+      return new Intl.DateTimeFormat("th-TH", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        timeZone: "Asia/Bangkok",
+      }).format(new Date(iso + "T00:00:00+07:00"));
+    } catch {
+      return iso;
+    }
+  };
+  const bubbles = opts.days.slice(0, 10).map(d => {
+    const body: any[] = [
+      { type: "text", text: fmt(d.date), weight: "bold", size: "sm", color: INK },
+      {
+        type: "text",
+        text: d.title || "ยังไม่มีลุค",
+        size: "xs",
+        color: d.title ? MUTED : "#B0A89C",
+        wrap: true,
+      },
+    ];
+    if (d.luckyNote) {
+      body.push({ type: "text", text: d.luckyNote, size: "xxs", color: GOLD, wrap: true });
+    }
+    const bubble: any = {
+      type: "bubble",
+      size: "kilo",
+      body: { type: "box", layout: "vertical", spacing: "sm", contents: body },
+      footer: {
+        type: "box",
+        layout: "vertical",
+        contents: [
+          {
+            type: "button",
+            style: "primary",
+            color: GOLD,
+            height: "sm",
+            action: { type: "uri", label: "เปิดปฏิทิน", uri: opts.calendarUrl },
+          },
+        ],
+      },
+    };
+    if (d.imageUrl && /^https?:\/\//i.test(d.imageUrl)) {
+      bubble.hero = {
+        type: "image",
+        url: d.imageUrl,
+        size: "full",
+        aspectRatio: "3:4",
+        aspectMode: "cover",
+      };
+    }
+    return bubble;
+  });
+  return {
+    type: "flex",
+    altText: "ลุคของคุณ 7 วันข้างหน้า",
+    contents: { type: "carousel", contents: bubbles },
+  };
+}
+
 /** Notify the SELLER that someone reserved their item. */
 export function sellerOrderMessage(opts: {
   itemName: string;
