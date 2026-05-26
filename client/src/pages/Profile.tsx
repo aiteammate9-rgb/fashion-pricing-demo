@@ -107,6 +107,33 @@ export default function ProfilePage() {
     }
   };
 
+  // Scan skin tone from a photo (for users who don't know their own).
+  const skinScanRef = useRef<HTMLInputElement>(null);
+  const analyzeSkin = trpc.profile.analyzeSkinTone.useMutation({
+    onSuccess: (r) => {
+      if (r.usable && r.skinTone) {
+        setSkinTone(r.skinTone);
+        if (r.undertone) setUndertone(r.undertone);
+        toast.success(`ประเมินแล้ว: ${r.reason}${r.confidence ? ` (มั่นใจ ${r.confidence}%)` : ""}`);
+      } else {
+        toast.warning(r.reason || "ถ่ายใหม่ด้วยแสงธรรมชาติ ให้เห็นผิวชัดเจน");
+      }
+    },
+    onError: (e) => toast.error(`สแกนไม่สำเร็จ: ${e.message}`),
+  });
+
+  const onScanSkin = async (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (e.target) e.target.value = ""; // allow re-pick same file
+    if (!f) return;
+    try {
+      const { b64, mime } = await fileToBase64(f);
+      analyzeSkin.mutate({ imageBase64: b64, mimeType: mime });
+    } catch {
+      toast.error("อ่านรูปไม่สำเร็จ");
+    }
+  };
+
   const toggleStyle = (s: string) =>
     setStyles((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
 
@@ -198,7 +225,25 @@ export default function ProfilePage() {
             {/* Skin tone / undertone */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">สีผิว</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">สีผิว</Label>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 text-[11px] text-teal-700 hover:text-teal-800 disabled:opacity-50"
+                    disabled={analyzeSkin.isPending}
+                    onClick={() => skinScanRef.current?.click()}
+                  >
+                    <Camera className="w-3 h-3" />
+                    {analyzeSkin.isPending ? "กำลังสแกน..." : "สแกนจากรูป"}
+                  </button>
+                  <input
+                    ref={skinScanRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onScanSkin}
+                  />
+                </div>
                 <select
                   className="w-full border border-input rounded-md px-2 py-2 text-sm bg-card"
                   value={skinTone}
@@ -211,6 +256,9 @@ export default function ProfilePage() {
                     </option>
                   ))}
                 </select>
+                <p className="text-[10px] text-muted-foreground leading-snug">
+                  ไม่รู้สีผิว? กด "สแกนจากรูป" — ถ่าย/อัปโหลดรูปด้วย <b>แสงธรรมชาติ</b> ให้เห็นผิวหน้าหรือแขนชัด ไม่ใช้ฟิลเตอร์
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">อันเดอร์โทน</Label>

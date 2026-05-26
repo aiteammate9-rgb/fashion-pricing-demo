@@ -135,6 +135,77 @@ export const profileRouter = router({
       }
       return loadProfile(ctx.user.id);
     }),
+
+  // Analyse skin tone + undertone from an uploaded photo, for users who don't
+  // know their own. Requires natural light + clearly visible bare skin; returns
+  // usable=false (with a Thai reason) when the photo is too dark/bright/filtered
+  // or skin isn't visible, so the UI can ask for a retake.
+  analyzeSkinTone: protectedProcedure
+    .input(
+      z.object({
+        imageBase64: z.string().min(10),
+        mimeType: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const mime = input.mimeType || "image/jpeg";
+      const dataUrl = `data:${mime};base64,${input.imageBase64}`;
+      const systemPrompt =
+        "You are a professional personal-color analyst. Analyse ONLY the human skin in the photo. " +
+        "Judge skin tone depth and undertone (cool/neutral/warm) from the bare skin (face, neck or arm). " +
+        "Be strict about input quality: if the photo is too dark or blown out, heavily filtered, " +
+        "black & white, or the skin is not clearly visible, you CANNOT judge — set usable=false. " +
+        'Respond with JSON ONLY: {"usable": boolean, "skinTone": "fair|light|medium|tan|deep|unknown", ' +
+        '"undertone": "cool|neutral|warm|unknown", "confidence": 0-100, "reason": "<short Thai sentence>"}. ' +
+        "If usable=false, reason must tell the user in Thai to retake in natural daylight with bare skin clearly visible and no filter.";
+      const userPrompt =
+        "วิเคราะห์สีผิวและอันเดอร์โทนของคนในรูปนี้ ตอบเป็น JSON ตามรูปแบบที่กำหนด " +
+        "ถ้าแสงไม่พอ/ใช้ฟิลเตอร์/มองไม่เห็นผิวชัด ให้ usable=false และบอกให้ถ่ายใหม่ด้วยแสงธรรมชาติ";
+
+      let parsed: any = {};
+      try {
+        const resp = await invokeLLM({
+          messages: [
+            { role: "system", content: systemPrompt },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: userPrompt },
+                { type: "image_url", image_url: { url: dataUrl } },
+              ],
+            },
+          ],
+          responseFormat: { type: "json_object" },
+        });
+        const raw = resp.choices[0]?.message?.content;
+        parsed = typeof raw === "string" ? JSON.parse(raw) : raw ?? {};
+      } catch (e) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "วิเคราะห์รูปไม่สำเร็จ ลองใหม่อีกครั้ง",
+        });
+      }
+
+      const skinTone = (SKIN_TONES as readonly string[]).includes(parsed.skinTone)
+        ? parsed.skinTone
+        : null;
+      const undertone = (UNDERTONES as readonly string[]).includes(parsed.undertone)
+        ? parsed.undertone
+        : null;
+      const usable = parsed.usable !== false && !!skinTone;
+      return {
+        usable,
+        skinTone: usable ? skinTone : null,
+        undertone: usable ? undertone : null,
+        confidence: typeof parsed.confidence === "number" ? parsed.confidence : null,
+        reason:
+          typeof parsed.reason === "string" && parsed.reason.trim()
+            ? parsed.reason.trim()
+            : usable
+              ? "วิเคราะห์สำเร็จ"
+              : "ถ่ายใหม่ด้วยแสงธรรมชาติ ให้เห็นผิวชัดเจน ไม่ใช้ฟิลเตอร์",
+      };
+    }),
 });
 
 // ───────────────────────── Matching ─────────────────────────
