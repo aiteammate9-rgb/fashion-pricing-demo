@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerLineRoutes } from "./lineAuth";
 import { registerProfileApi } from "./profileApi";
+import { registerCronApi } from "./cronApi";
 import { registerStorageProxy } from "./storageProxy";
 import { registerEvaluateStream } from "../routes/evaluate-stream";
 import { appRouter } from "../routers";
@@ -87,6 +88,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerLineRoutes(app);
   registerProfileApi(app);
+  registerCronApi(app);
   registerEvaluateStream(app);
   // tRPC API
   app.use(

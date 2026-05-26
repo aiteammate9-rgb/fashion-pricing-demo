@@ -166,17 +166,21 @@ export const matchingRouter = router({
         });
       }
 
-      // If the user ticked specific items, match only those; otherwise use all.
-      // Users can re-match existing clothes without re-uploading.
+      // Only ever match garments that are NOT already locked into a look.
+      // Once an item is matched it gets a tag (แมตช์ A/B/…) and matchingStatus
+      // "matched"; those are excluded from every future run. Items that are
+      // "unmatched" or "no_pair" stay eligible.
+      const eligible = allItems.filter(it => it.matchingStatus !== "matched");
       const items =
         input.itemIds && input.itemIds.length
-          ? allItems.filter(it => input.itemIds!.includes(it.id))
-          : allItems;
+          ? eligible.filter(it => input.itemIds!.includes(it.id))
+          : eligible;
 
       if (items.length < 2) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "กรุณาเลือกเสื้อผ้าอย่างน้อย 2 ชิ้นเพื่อจัดลุค",
+          message:
+            "เสื้อผ้าที่ยังไม่ถูกจัดลุคมีไม่พอ (ต้องการอย่างน้อย 2 ชิ้น) — เพิ่มเสื้อผ้าใหม่ในตู้ก่อน",
         });
       }
 
@@ -197,7 +201,7 @@ export const matchingRouter = router({
 
       const systemPrompt = `You are a world-class fashion stylist with the editorial eye of Vogue and the technical discipline of Parisian couture, Milanese tailoring and Japanese minimalism. You operate under global fashion principles and a strict Personal Color framework. You write all natural-language fields in Thai (ภาษาไทย). Hex codes remain #RRGGBB. Ids remain numeric.
 
-You may propose MORE THAN ONE outfit per run. Each "look" you return must independently satisfy ALL of the iron rules below — there are NO group discounts. A look is acceptable ONLY if it would pass on its own as the single recommendation. Do not pad the array with weak looks just to reach the requested count; if only one look truly works, return only one.
+You may propose MORE THAN ONE outfit per run. Each "look" you return must independently satisfy ALL of the iron rules below — there are NO group discounts. A look is acceptable ONLY if it would pass on its own as the single recommendation. Do not pad the array with weak looks just to reach the requested count; if only one look truly works, return only one. ABSOLUTE RULE: never pair garments randomly or just to use them up. Every pairing must be defensible by international fashion principles (color theory, proportion/silhouette, formality, fabric, season). If two items would only "sort of" work together, DO NOT pair them — put the weaker item in rejectedItemIds instead. A forced or mediocre look is a failure.
 
 VOICE FOR stylistCommentary — POWER & SOCIAL VALIDATION MODE: เขียนเหมือนบรรณาธิการแฟชั่นระดับ Vogue ที่ประกาศชัยชนะของลุคนี้ให้ผู้ใช้คนนี้โดยเฉพาะ ทุกประโยคเฉียบคม กระชับ หนักแน่น ทำให้ผู้อ่านเห็นภาพตัวเอง "ในทันทีที่ปรากฏตัว" ท่ามกลางผู้คน ทุกคำคุณศัพท์ต้องผูกเหตุผลเชิงเทคนิค (undertone / silhouette / fabric / color theory) ห้ามชมลอย ๆ ห้ามอ้างอำนาจเหนือธรรมชาติ ห้ามสัญญาผลทางดวง การพูดถึง "สายตาคนรอบตัว" คือ social validation เชิงสไตล์ ไม่ใช่คำทำนาย
 
@@ -399,11 +403,31 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
         for (const id of look.selectedItemIds as number[]) everSelected.add(id);
       }
 
+      // Human-friendly sequential group tags: แมตช์ A, B, C, … continuing from
+      // whatever labels this user already has.
+      const existingGroups = await db
+        .select({ g: wardrobe.matchingGroup })
+        .from(wardrobe)
+        .where(and(eq(wardrobe.userId, ctx.user.id), isNotNull(wardrobe.matchingGroup)));
+      const usedLabels = new Set<string>(
+        existingGroups.map(e => e.g).filter((g): g is string => !!g),
+      );
+      const makeLabel = (i: number) => {
+        const L = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        return i < 26 ? L[i] : L[i % 26] + Math.floor(i / 26);
+      };
+      let labelIdx = usedLabels.size;
+      const nextGroupLabel = () => {
+        let l = makeLabel(labelIdx++);
+        while (usedLabels.has(l)) l = makeLabel(labelIdx++);
+        usedLabels.add(l);
+        return l;
+      };
+
       const savedLooks: any[] = [];
       for (const look of validLooks) {
         const selectedIds: number[] = look.selectedItemIds;
-        const groupLabel =
-          "G" + Date.now().toString(36) + Math.random().toString(36).slice(2, 4);
+        const groupLabel = nextGroupLabel();
 
         // Mark items matched (only this user's items).
         await db
@@ -536,11 +560,11 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
       const profile = await loadProfile(ctx.user.id);
       const maxLooks = input.maxLooks ?? 2;
 
-      // Items the user already owns.
+      // Items the user already owns — only those NOT already locked into a look.
       const ownItems = await db
         .select()
         .from(wardrobe)
-        .where(eq(wardrobe.userId, ctx.user.id));
+        .where(and(eq(wardrobe.userId, ctx.user.id), ne(wardrobe.matchingStatus, "matched")));
 
       // Items other users are selling.
       const marketItems = await db
@@ -596,7 +620,7 @@ ${JSON.stringify(itemsForLLM.map(({ imageUrl, ...rest }) => rest))}
 
 You are styling a SHOPPABLE look: the user already OWNS some garments, and OTHER people are SELLING others. Compose looks that pair what the user owns with pieces they could BUY to complete the outfit. Each look MUST include AT LEAST ONE buyable (owned=false) item — otherwise it is not a valid cross-closet look. Prefer looks where 1–2 affordable buyable pieces unlock the user's existing wardrobe.
 
-Each "look" must independently satisfy ALL iron rules below — no group discounts.
+Each "look" must independently satisfy ALL iron rules below — no group discounts. ABSOLUTE RULE: never pair garments randomly or just to add a buyable item. Every pairing must be defensible by international fashion principles (color theory, proportion/silhouette, formality, fabric, season). If a buyable piece does not genuinely elevate the look, DO NOT include it — return fewer looks instead of a forced one.
 
 === IRON RULES (HARD CONSTRAINTS — NEVER BREAK) ===
 World-class / international fashion standards + a strict Personal Color framework. They outrank lucky colour.
@@ -784,9 +808,40 @@ ${occasion}
         });
       }
 
+      // Sequential group tags (แมตช์ A, B, …) continuing from the user's existing labels.
+      const existingGroupsX = await db
+        .select({ g: wardrobe.matchingGroup })
+        .from(wardrobe)
+        .where(and(eq(wardrobe.userId, ctx.user.id), isNotNull(wardrobe.matchingGroup)));
+      const usedLabelsX = new Set<string>(
+        existingGroupsX.map(e => e.g).filter((g): g is string => !!g),
+      );
+      const makeLabelX = (i: number) => {
+        const L = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        return i < 26 ? L[i] : L[i % 26] + Math.floor(i / 26);
+      };
+      let labelIdxX = usedLabelsX.size;
+      const nextGroupLabelX = () => {
+        let l = makeLabelX(labelIdxX++);
+        while (usedLabelsX.has(l)) l = makeLabelX(labelIdxX++);
+        usedLabelsX.add(l);
+        return l;
+      };
+
       const savedLooks: any[] = [];
       for (const look of validLooks) {
         const selectedIds: number[] = look.selectedItemIds;
+
+        // Tag the user's OWN garments used here as matched so they aren't
+        // re-matched later. Buyable items belong to other users — never touch them.
+        const ownUsedIds = selectedIds.filter(id => !buyableIds.has(id));
+        if (ownUsedIds.length) {
+          const groupLabel = nextGroupLabelX();
+          await db
+            .update(wardrobe)
+            .set({ matchingStatus: "matched", matchingGroup: groupLabel, lastMatchedAt: new Date() })
+            .where(and(eq(wardrobe.userId, ctx.user.id), inArray(wardrobe.id, ownUsedIds)));
+        }
 
         // Buyable pieces in this look → CTA list saved into analysis.buyItems.
         const buyItems = selectedIds

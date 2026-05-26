@@ -25,4 +25,8 @@ export const ENV = {
   // Shared cookie domain so login works across sheowa.com + app.sheowa.com.
   // Set COOKIE_DOMAIN=.sheowa.com in production; leave empty for localhost.
   cookieDomain: process.env.COOKIE_DOMAIN ?? "",
+  // Secret guarding the daily outfit-calendar cron endpoint
+  // (/api/cron/daily-outfit?key=...). Set CRON_SECRET in Render; the external
+  // scheduler (e.g. cron-job.org) must send the same value.
+  cronSecret: process.env.CRON_SECRET ?? "",
 };

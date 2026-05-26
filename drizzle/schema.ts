@@ -208,3 +208,25 @@ export const orders = mysqlTable("orders", {
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
+
+// ─── Outfit Calendar Table (ปฏิทินแต่งตัว) ───
+// One row = one planned outfit for a given calendar day for a user.
+// `outfitId` points at an existing matched look (outfit_recommendations.id) —
+// we REUSE matched looks across the month instead of generating a new image
+// per day (keeps generation cost down). `luckyNote`/`weatherNote` are short
+// per-day text guides. `pushed` (0/1) tracks whether the daily LINE reminder
+// for that date has already been sent (set by the /api/cron/daily-outfit job).
+export const outfitCalendar = mysqlTable("outfit_calendar", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // ISO yyyy-mm-dd
+  outfitId: int("outfitId"), // outfit_recommendations.id (nullable = rest day)
+  luckyNote: varchar("luckyNote", { length: 300 }),
+  weatherNote: varchar("weatherNote", { length: 300 }),
+  pushed: int("pushed").default(0).notNull(), // 0 = not yet pushed to LINE, 1 = pushed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type OutfitCalendarRow = typeof outfitCalendar.$inferSelect;
+export type InsertOutfitCalendarRow = typeof outfitCalendar.$inferInsert;

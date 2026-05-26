@@ -9,6 +9,7 @@ import { wardrobeRouter } from "./routers/wardrobe";
 // ─── Matching / lookbook (ported from ai_digital_wardrobe) ───
 import { matchingRouter, profileRouter, outfitsRouter } from "./routers/matching";
 import { ordersRouter } from "./routers/orders";
+import { calendarRouter } from "./routers/calendar";
 
 export const appRouter = router({
   system: systemRouter,
@@ -31,6 +32,7 @@ export const appRouter = router({
   matching: matchingRouter,
   outfits: outfitsRouter,
   orders: ordersRouter,
+  calendar: calendarRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -118,6 +118,52 @@ export function outfitMessage(opts: {
   return { type: "flex", altText: `ลุคใหม่: ${opts.title}`, contents: bubble };
 }
 
+/**
+ * A compact card whose button opens the full outfit calendar (/calendar) inside
+ * LINE's in-app browser. Sent when the user fills the month and every Monday.
+ */
+export function calendarMessage(opts: { calendarUrl: string; title?: string; subtitle?: string }) {
+  const bubble: any = {
+    type: "bubble",
+    body: {
+      type: "box",
+      layout: "vertical",
+      spacing: "sm",
+      contents: [
+        {
+          type: "text",
+          text: opts.title || "ปฏิทินแต่งตัวของคุณ",
+          weight: "bold",
+          size: "lg",
+          color: INK,
+          wrap: true,
+        },
+        {
+          type: "text",
+          text: opts.subtitle || "ดูลุคทั้งเดือน + สีมงคลรายวันได้เลย",
+          size: "sm",
+          color: MUTED,
+          wrap: true,
+        },
+      ],
+    },
+    footer: {
+      type: "box",
+      layout: "vertical",
+      contents: [
+        {
+          type: "button",
+          style: "primary",
+          color: GOLD,
+          height: "sm",
+          action: { type: "uri", label: "เปิดปฏิทินแต่งตัว", uri: opts.calendarUrl },
+        },
+      ],
+    },
+  };
+  return { type: "flex", altText: "ปฏิทินแต่งตัวของคุณ", contents: bubble };
+}
+
 /** Notify the SELLER that someone reserved their item. */
 export function sellerOrderMessage(opts: {
   itemName: string;

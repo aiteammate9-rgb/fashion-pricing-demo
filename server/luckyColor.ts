@@ -132,3 +132,43 @@ export function analyzeLuckyColors(birthDate: string | null | undefined): LuckyC
     rationale: `Born on a ${palette.name} under ${sign}, you carry a natural affinity for ${palette.primary.name.toLowerCase()}. Anchor key looks with this hue, layer ${palette.supporting.map(s => s.name.toLowerCase()).join(" and ")} for nuance, and let ${palette.avoid.name.toLowerCase()} stay an accent rather than the lead.`,
   };
 }
+
+// ─── Per-day lucky color (สีมงคลประจำวัน) ───
+// Unlike analyzeLuckyColors() which keys off the user's BIRTH weekday, this
+// returns the lucky palette for a SPECIFIC calendar date's weekday — used by
+// the outfit calendar so each day carries a Thai day-color suggestion.
+const THAI_DAY_NAMES = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+
+export type DayLuckyColor = {
+  weekday: number; // 0=Sunday
+  dayNameTh: string;
+  dayNameEn: string;
+  primary: { name: string; hex: string };
+  supporting: { name: string; hex: string }[];
+  avoid: { name: string; hex: string };
+};
+
+export function luckyColorForDate(isoDate: string): DayLuckyColor | null {
+  const date = new Date(isoDate + "T00:00:00+07:00");
+  if (isNaN(date.getTime())) return null;
+  // Use Bangkok-local weekday.
+  const weekday = new Date(
+    date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }),
+  ).getDay();
+  const palette = DAY_PALETTE[weekday] ?? DAY_PALETTE[0];
+  return {
+    weekday,
+    dayNameTh: THAI_DAY_NAMES[weekday],
+    dayNameEn: palette.name,
+    primary: palette.primary,
+    supporting: palette.supporting,
+    avoid: palette.avoid,
+  };
+}
+
+/** Short Thai one-liner for the calendar / LINE card. */
+export function luckyNoteForDate(isoDate: string): string | null {
+  const lc = luckyColorForDate(isoDate);
+  if (!lc) return null;
+  return `สีมงคลวัน${lc.dayNameTh}: ${lc.primary.name} · เลี่ยง ${lc.avoid.name}`;
+}

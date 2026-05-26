@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag, Check, Trash, Home } from "lucide-react";
+import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag, Check, Trash, Home, CalendarDays } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -57,19 +57,6 @@ export default function LookbookPage() {
 
   const profile = trpc.profile.me.useQuery(undefined, { enabled: !!user });
   const outfits = trpc.outfits.list.useQuery(undefined, { enabled: !!user });
-  const wardrobeItems = trpc.wardrobe.list.useQuery(
-    { limit: 100, offset: 0 },
-    { enabled: !!user },
-  );
-  // Wardrobe items the user ticked to match. Empty = use all.
-  const [matchItemIds, setMatchItemIds] = useState<Set<number>>(new Set());
-  const toggleMatchItem = (id: number) =>
-    setMatchItemIds(prev => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
-
   const upsertProfile = trpc.profile.upsert.useMutation({
     onSuccess: () => {
       toast.success("บันทึกโปรไฟล์แล้ว");
@@ -92,6 +79,11 @@ export default function LookbookPage() {
       outfits.refetch();
     },
     onError: e => toast.error(`จับคู่ข้ามตู้ไม่สำเร็จ: ${e.message}`),
+  });
+
+  const fillCalendar = trpc.calendar.generateMonth.useMutation({
+    onSuccess: r => toast.success(`ลงปฏิทินแล้ว ${r.assigned} วัน — ระบบจะส่งลุคเข้า LINE ให้ทุกเช้า`),
+    onError: e => toast.error(`ลงปฏิทินไม่สำเร็จ: ${e.message}`),
   });
 
   const placeOrder = trpc.orders.create.useMutation({
@@ -184,12 +176,37 @@ export default function LookbookPage() {
           <h1 className="text-xl font-semibold flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-500" /> ลุคบุ๊ค · สไตลิสต์ระดับโลก
           </h1>
-          <a href="https://sheowa.com" aria-label="หน้าร้าน">
-            <Button variant="ghost" size="sm">
-              <Home className="w-4 h-4" />
-            </Button>
-          </a>
+          <div className="flex items-center gap-1">
+            <Link href="/calendar" aria-label="ปฏิทินแต่งตัว">
+              <Button variant="ghost" size="sm">
+                <CalendarDays className="w-4 h-4" />
+              </Button>
+            </Link>
+            <a href="https://sheowa.com" aria-label="หน้าร้าน">
+              <Button variant="ghost" size="sm">
+                <Home className="w-4 h-4" />
+              </Button>
+            </a>
+          </div>
         </div>
+
+        {/* Plan the month from matched looks → daily LINE reminders */}
+        {(outfits.data?.length ?? 0) > 0 && (
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50/60 px-3.5 py-2.5">
+            <div className="flex items-center gap-2 text-sm text-teal-800">
+              <CalendarDays className="w-4 h-4 shrink-0" />
+              <span>ลงลุคที่แมตช์ไว้ลงปฏิทินทั้งเดือน + เตือนเข้า LINE ทุกเช้า</span>
+            </div>
+            <Button
+              size="sm"
+              className="bg-teal-600 hover:bg-teal-700 shrink-0"
+              disabled={fillCalendar.isPending}
+              onClick={() => fillCalendar.mutate({})}
+            >
+              {fillCalendar.isPending ? "กำลังลง..." : "ลงปฏิทิน"}
+            </Button>
+          </div>
+        )}
 
         {/* Profile / lucky color */}
         <Card className="mb-6">
@@ -238,57 +255,9 @@ export default function LookbookPage() {
         <Card className="mb-8">
           <CardContent className="p-5 space-y-3">
             <p className="text-sm font-medium text-gray-700">ให้สไตลิสต์จัดลุคจากตู้เสื้อผ้า</p>
-
-            {/* Pick which wardrobe items to match (tick) — empty = all */}
-            {wardrobeItems.data && wardrobeItems.data.items.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-gray-500">
-                    เลือกเสื้อผ้าที่จะแมตช์ {matchItemIds.size > 0 ? `(${matchItemIds.size} ชิ้น)` : "(ทั้งหมด)"}
-                  </p>
-                  {matchItemIds.size > 0 && (
-                    <button
-                      type="button"
-                      className="text-xs text-teal-700 underline"
-                      onClick={() => setMatchItemIds(new Set())}
-                    >
-                      ใช้ทั้งหมด
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                  {wardrobeItems.data.items.map((it: any) => {
-                    const on = matchItemIds.has(it.id);
-                    return (
-                      <button
-                        key={it.id}
-                        type="button"
-                        onClick={() => toggleMatchItem(it.id)}
-                        className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
-                          on ? "border-teal-600" : "border-transparent"
-                        }`}
-                      >
-                        {it.imageUrl ? (
-                          <img src={it.imageUrl} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-warm-100 flex items-center justify-center">
-                            <Shirt className="w-4 h-4 text-warm-200" />
-                          </div>
-                        )}
-                        {on && (
-                          <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-teal-600 flex items-center justify-center">
-                            <Check className="w-3 h-3 text-white" />
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[11px] text-gray-400 mt-1">
-                  ไม่ติ๊ก = ใช้เสื้อผ้าทุกชิ้นในตู้ · ติ๊กเฉพาะชิ้นที่อยากเอามาแมตช์ก็ได้
-                </p>
-              </div>
-            )}
+            <p className="text-[11px] text-gray-400">
+              สไตลิสต์จะหยิบเฉพาะเสื้อผ้าที่ยังไม่ถูกจัดลุค (ไม่มีแท็กแมตช์) มาจับคู่ตามหลักแฟชั่นสากล ชิ้นที่จัดไปแล้วจะถูกข้าม
+            </p>
 
             <div className="flex flex-wrap items-end gap-3">
               <label className="text-xs text-gray-500 flex-1 min-w-[180px]">
@@ -320,7 +289,6 @@ export default function LookbookPage() {
                   generate.mutate({
                     maxLooks,
                     occasion: occasion.trim() || undefined,
-                    itemIds: matchItemIds.size ? Array.from(matchItemIds) : undefined,
                   });
                 }}
               >

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus, Check, ChevronLeft, ChevronRight, Shirt, Loader2, Sparkles, RotateCcw, UserCircle, Home as HomeIcon } from "lucide-react";
+import { X, Plus, Check, ChevronLeft, ChevronRight, Shirt, Loader2, Sparkles, RotateCcw, UserCircle, Home as HomeIcon, CalendarDays } from "lucide-react";
 import FashionTips from "@/components/FashionTips";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -772,6 +772,12 @@ export default function Home() {
           <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
             <Shirt className="w-3.5 h-3.5" />
             ตู้เสื้อผ้า
+          </Button>
+        </Link>
+        <Link href="/calendar">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
+            <CalendarDays className="w-3.5 h-3.5" />
+            ปฏิทินแต่งตัว
           </Button>
         </Link>
         <Link href="/profile">

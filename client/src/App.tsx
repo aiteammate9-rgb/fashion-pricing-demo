@@ -11,6 +11,7 @@ const ListingGenerator = lazy(() => import("./pages/ListingGenerator"));
 const Wardrobe = lazy(() => import("./pages/Wardrobe"));
 const Lookbook = lazy(() => import("./pages/Lookbook"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Calendar = lazy(() => import("./pages/Calendar"));
 
 const Spinner = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/wardrobe">{() => <Suspense fallback={<Spinner />}><Wardrobe /></Suspense>}</Route>
       <Route path="/lookbook">{() => <Suspense fallback={<Spinner />}><Lookbook /></Suspense>}</Route>
       <Route path="/profile">{() => <Suspense fallback={<Spinner />}><Profile /></Suspense>}</Route>
+      <Route path="/calendar">{() => <Suspense fallback={<Spinner />}><Calendar /></Suspense>}</Route>
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

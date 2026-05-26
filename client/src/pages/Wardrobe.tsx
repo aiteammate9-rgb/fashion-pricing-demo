@@ -446,6 +446,11 @@ export default function WardrobePage() {
                               ขายแล้ว
                             </Badge>
                           )}
+                          {item.matchingStatus === "matched" && item.matchingGroup && (
+                            <Badge className="text-[9px] px-1.5 py-0 bg-purple-600/90 text-white border-0">
+                              แมตช์ {item.matchingGroup}
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Delete button */}
