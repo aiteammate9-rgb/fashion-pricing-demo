@@ -121,7 +121,7 @@ async function runVisionDetection(images: EvaluateRequest["images"]) {
 2. แบรนด์ (ถ้าเห็นโลโก้หรือป้ายแบรนด์ ให้ระบุ ถ้าไม่แน่ใจให้ตอบ "ไม่ระบุ")
 3. สีหลักและสีรอง
 4. ตำหนิที่เห็น (รอยเปื้อน, รอยขาด, สีซีด, กระดุมหลุด ฯลฯ)
-5. สภาพโดยรวม (new_with_tag, like_new, good, fair, poor)
+5. สภาพโดยรวม (new_with_tag, like_new, excellent, good, fair, poor, defective)
 6. รายละเอียดเพิ่มเติม (ลวดลาย, วัสดุ, สไตล์)
 
 ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอก JSON`,
@@ -149,7 +149,7 @@ async function runVisionDetection(images: EvaluateRequest["images"]) {
             brand: { type: "string", description: "ชื่อแบรนด์" },
             primaryColor: { type: "string", description: "สีหลัก" },
             secondaryColor: { type: "string", description: "สีรอง" },
-            condition: { type: "string", description: "สภาพ: new_with_tag, like_new, good, fair, poor" },
+            condition: { type: "string", description: "สภาพ: new_with_tag, like_new, excellent, good, fair, poor, defective" },
             defects: { type: "array", items: { type: "string" }, description: "รายการตำหนิ" },
             defectLevel: { type: "string", description: "ระดับตำหนิ: none, minor, moderate, major" },
             material: { type: "string", description: "วัสดุ" },
@@ -234,17 +234,20 @@ const BRAND_TIER_MAP: Record<string, string> = {
   hermes: "premium", balenciaga: "premium", dior: "premium",
 };
 
+// Condition multipliers — synced to pricing-system.md v2.0 (stricter, 7 levels).
 const CONDITION_MULTIPLIER: Record<string, number> = {
   new_with_tag: 1.0,
-  like_new: 0.85,
-  good: 0.7,
-  fair: 0.55,
-  poor: 0.35,
+  like_new: 0.88,
+  excellent: 0.73,
+  good: 0.58,
+  fair: 0.38,
+  poor: 0.18,
+  defective: 0.15,
 };
 
 const DEFECT_MULTIPLIER: Record<string, number> = {
   none: 1.0,
-  minor: 0.9,
+  minor: 0.88,
   moderate: 0.75,
   medium: 0.75,
   major: 0.55,
@@ -278,7 +281,7 @@ function calculateRuleBasedPrice(detection: any) {
     base = base * 2.5;
   }
 
-  const condMult = CONDITION_MULTIPLIER[condition] || 0.7;
+  const condMult = CONDITION_MULTIPLIER[condition] || 0.58;
   const defMult = DEFECT_MULTIPLIER[defectLevel] || 1.0;
 
   // Calculate international price (before Thai adjustment)
@@ -296,6 +299,8 @@ function calculateRuleBasedPrice(detection: any) {
   // Sellability score
   let sellability = 65;
   if (condition === "new_with_tag" || condition === "like_new") sellability += 15;
+  else if (condition === "excellent") sellability += 10;
+  else if (condition === "poor" || condition === "defective") sellability -= 10;
   if (tier === "premium" || tier === "high") sellability += 10;
   if (defectLevel === "none") sellability += 5;
   if (defectLevel === "major") sellability -= 20;

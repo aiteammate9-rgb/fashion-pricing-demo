@@ -140,8 +140,8 @@ function mapAICategory(aiCategory: string): string {
 
 function mapAICondition(aiCondition: string): string {
   const mapping: Record<string, string> = {
-    new_with_tag: "new_with_tag", like_new: "like_new",
-    good: "good", fair: "fair", poor: "defective",
+    new_with_tag: "new_with_tag", like_new: "like_new", excellent: "excellent",
+    good: "good", fair: "fair", poor: "poor", defective: "defective",
   };
   return mapping[aiCondition?.toLowerCase()] || "good";
 }

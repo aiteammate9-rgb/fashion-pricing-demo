@@ -312,16 +312,17 @@ export function estimateThaiResaleFromRetail(
 ): { min: number; max: number; recommended: number } {
   const factor = getThaiMarketFactor(brand, existingBrandTier);
   
-  // Condition adjustment
+  // Condition adjustment — synced to pricing-system.md v2.0 (stricter, 7 levels).
   const conditionMultiplier: Record<string, number> = {
-    new_with_tag: 1.10,
-    like_new: 0.95,
-    good: 0.80,
-    fair: 0.60,
-    poor: 0.40,
-    defective: 0.35,
+    new_with_tag: 1.0,
+    like_new: 0.88,
+    excellent: 0.73,
+    good: 0.58,
+    fair: 0.38,
+    poor: 0.18,
+    defective: 0.15,
   };
-  const condMult = conditionMultiplier[condition] || 0.80;
+  const condMult = conditionMultiplier[condition] || 0.58;
 
   const min = Math.round(retailPrice * factor.resalePercentOfRetail.min * condMult);
   const max = Math.round(retailPrice * factor.resalePercentOfRetail.max * condMult);

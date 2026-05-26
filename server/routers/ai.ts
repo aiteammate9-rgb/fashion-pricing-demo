@@ -65,7 +65,7 @@ export const aiRouter = router({
 2. แบรนด์ (ถ้าเห็นโลโก้หรือป้ายแบรนด์ ให้ระบุ ถ้าไม่แน่ใจให้ตอบ "ไม่ระบุ")
 3. สีหลักและสีรอง
 4. ตำหนิที่เห็น (รอยเปื้อน, รอยขาด, สีซีด, กระดุมหลุด ฯลฯ)
-5. สภาพโดยรวม (new_with_tag, like_new, good, fair, poor)
+5. สภาพโดยรวม (new_with_tag, like_new, excellent, good, fair, poor, defective)
 6. รายละเอียดเพิ่มเติม (ลวดลาย, วัสดุ, สไตล์)
 
 ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอก JSON`,
@@ -107,7 +107,7 @@ export const aiRouter = router({
                   },
                   condition: {
                     type: "string",
-                    description: "สภาพ: new_with_tag, like_new, good, fair, poor",
+                    description: "สภาพ: new_with_tag, like_new, excellent, good, fair, poor, defective",
                   },
                   defects: {
                     type: "array",

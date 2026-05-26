@@ -478,13 +478,15 @@ const BRAND_TIERS: Record<string, string> = {
   "dolce & gabbana": "premium",
 };
 
-// Condition multipliers - adjusted to reflect that even "fair" items retain value for branded goods
+// Condition multipliers — synced to pricing-system.md v2.0 (stricter, 7 levels).
 const CONDITION_MULTIPLIER: Record<string, number> = {
-  new_with_tag: 1.10,
-  like_new: 0.95,
-  good: 0.85,
-  fair: 0.70,
-  defective: 0.45,
+  new_with_tag: 1.0,
+  like_new: 0.88,
+  excellent: 0.73,
+  good: 0.58,
+  fair: 0.38,
+  poor: 0.18,
+  defective: 0.15,
 };
 
 const DEFECT_MULTIPLIER: Record<string, number> = {
@@ -631,7 +633,7 @@ function estimateBrandTier(brand: string): string {
 
 function conditionScore(condition: string): number {
   const scores: Record<string, number> = {
-    new_with_tag: 96, like_new: 88, good: 76, fair: 58, defective: 38,
+    new_with_tag: 96, like_new: 88, excellent: 82, good: 76, fair: 58, poor: 42, defective: 38,
   };
   return scores[normalize(condition)] || 65;
 }
@@ -668,7 +670,7 @@ export function evaluateItem(input: UserInput): PricingResult {
   const condKey = normalize(input.condition);
   const defKey = normalize(input.defectLevel);
 
-  const condMultiplier = CONDITION_MULTIPLIER[condKey] || 0.70;
+  const condMultiplier = CONDITION_MULTIPLIER[condKey] || 0.58;
   const defMultiplier = DEFECT_MULTIPLIER[defKey] || 0.85;
 
   let adjustedPrice = basePrice * condMultiplier * defMultiplier;
