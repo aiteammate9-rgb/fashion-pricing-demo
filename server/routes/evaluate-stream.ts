@@ -16,7 +16,23 @@ import { Router, Request, Response } from "express";
 import { invokeLLM } from "../_core/llm";
 import { getMarketPrice } from "../services/retailed";
 import { evaluateWithConsensus } from "../services/multi-agent";
-import { getThaiMarketFactor, getThaiVsInternationalBreakdown } from "@shared/thai-market-factor";
+import { getThaiMarketFactor, getThaiVsInternationalBreakdown, getThaiMarketTier } from "@shared/thai-market-factor";
+
+// Map the 10 Thai market tiers (from the 145+ brand list) → the 5 base-price
+// columns. This makes the full brand map the single source of truth for tiering
+// so brands not in the small BRAND_TIER_MAP below no longer default to "low".
+const THAI_TIER_TO_BASE: Record<string, "budget" | "low" | "mid" | "high" | "premium"> = {
+  ultra_luxury: "premium",
+  luxury: "premium",
+  premium_accessible: "premium",
+  streetwear_hype: "high",
+  sport_premium: "high",
+  high_street: "high",
+  thai_premium: "high",
+  thai_mid: "mid",
+  mid_tier: "mid",
+  budget: "budget",
+};
 
 const router = Router();
 
@@ -267,8 +283,11 @@ function calculateRuleBasedPrice(detection: any) {
   const defectLevel = detection.defectLevel?.toLowerCase() || "none";
 
   const basePrice = CATEGORY_BASE_PRICE[category] || CATEGORY_BASE_PRICE.t_shirt;
-  const tier = BRAND_TIER_MAP[brand] || "low";
-  
+  // Resolve the base-price tier from the COMPLETE 145+ brand map (via Thai tier),
+  // using the small BRAND_TIER_MAP only as a fallback hint for unlisted brands.
+  const thaiTier = getThaiMarketTier(brandOriginal, BRAND_TIER_MAP[brand]);
+  const tier = THAI_TIER_TO_BASE[thaiTier] || BRAND_TIER_MAP[brand] || "low";
+
   let base: number;
   if (tier === "budget") base = basePrice.low * 0.7;
   else if (tier === "low") base = basePrice.low;
