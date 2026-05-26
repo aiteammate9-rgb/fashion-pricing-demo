@@ -146,6 +146,8 @@ export const matchingRouter = router({
         occasion: z.string().max(160).optional(),
         notes: z.string().max(500).optional(),
         maxLooks: z.number().int().min(1).max(3).optional(),
+        // Optional: only match these wardrobe items. Empty/undefined = use all.
+        itemIds: z.array(z.number().int().positive()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -164,10 +166,19 @@ export const matchingRouter = router({
         });
       }
 
-      // Use ALL wardrobe items every time — users can re-match existing clothes
-      // without re-uploading. (Previously we only used "unmatched" items, which
-      // blocked re-matching once an item had been used in a look.)
-      const items = allItems;
+      // If the user ticked specific items, match only those; otherwise use all.
+      // Users can re-match existing clothes without re-uploading.
+      const items =
+        input.itemIds && input.itemIds.length
+          ? allItems.filter(it => input.itemIds!.includes(it.id))
+          : allItems;
+
+      if (items.length < 2) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "กรุณาเลือกเสื้อผ้าอย่างน้อย 2 ชิ้นเพื่อจัดลุค",
+        });
+      }
 
       const luckyColor = analyzeLuckyColors(profile?.birthDate ?? null);
 

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, LogIn, Save, Camera, Sparkles, UserCircle } from "lucide-react";
+import { ArrowLeft, LogIn, Save, Camera, Sparkles, UserCircle, Home } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 
@@ -148,7 +148,11 @@ export default function ProfilePage() {
           <h1 className="text-xl font-semibold flex items-center gap-2">
             <UserCircle className="w-5 h-5 text-teal-600" /> โปรไฟล์สไตล์
           </h1>
-          <div className="w-16" />
+          <a href="https://sheowa.com" aria-label="หน้าร้าน">
+            <Button variant="ghost" size="sm">
+              <Home className="w-4 h-4" />
+            </Button>
+          </a>
         </div>
 
         <Card className="mb-5">

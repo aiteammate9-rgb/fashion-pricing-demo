@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus, Check, ChevronLeft, ChevronRight, Shirt, Loader2, Sparkles, RotateCcw, UserCircle } from "lucide-react";
+import { X, Plus, Check, ChevronLeft, ChevronRight, Shirt, Loader2, Sparkles, RotateCcw, UserCircle, Home as HomeIcon } from "lucide-react";
 import FashionTips from "@/components/FashionTips";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -756,6 +756,12 @@ export default function Home() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Nav links: matching (lookbook) + wardrobe */}
       <div className="fixed top-4 right-4 z-40 flex gap-2">
+        <a href="https://sheowa.com">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
+            <HomeIcon className="w-3.5 h-3.5" />
+            หน้าร้าน
+          </Button>
+        </a>
         <Link href="/lookbook">
           <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
             <Sparkles className="w-3.5 h-3.5" />

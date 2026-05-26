@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag, Check, Trash } from "lucide-react";
+import { Sparkles, Wand2, LogIn, ArrowLeft, Trash2, Shirt, ShoppingBag, Check, Trash, Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -57,6 +57,18 @@ export default function LookbookPage() {
 
   const profile = trpc.profile.me.useQuery(undefined, { enabled: !!user });
   const outfits = trpc.outfits.list.useQuery(undefined, { enabled: !!user });
+  const wardrobeItems = trpc.wardrobe.list.useQuery(
+    { limit: 100, offset: 0 },
+    { enabled: !!user },
+  );
+  // Wardrobe items the user ticked to match. Empty = use all.
+  const [matchItemIds, setMatchItemIds] = useState<Set<number>>(new Set());
+  const toggleMatchItem = (id: number) =>
+    setMatchItemIds(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
 
   const upsertProfile = trpc.profile.upsert.useMutation({
     onSuccess: () => {
@@ -172,7 +184,11 @@ export default function LookbookPage() {
           <h1 className="text-xl font-semibold flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-500" /> ลุคบุ๊ค · AI สไตลิสต์
           </h1>
-          <div className="w-16" />
+          <a href="https://sheowa.com" aria-label="หน้าร้าน">
+            <Button variant="ghost" size="sm">
+              <Home className="w-4 h-4" />
+            </Button>
+          </a>
         </div>
 
         {/* Profile / lucky color */}
@@ -222,6 +238,58 @@ export default function LookbookPage() {
         <Card className="mb-8">
           <CardContent className="p-5 space-y-3">
             <p className="text-sm font-medium text-gray-700">ให้ AI จัดลุคจากตู้เสื้อผ้า</p>
+
+            {/* Pick which wardrobe items to match (tick) — empty = all */}
+            {wardrobeItems.data && wardrobeItems.data.items.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-gray-500">
+                    เลือกเสื้อผ้าที่จะแมตช์ {matchItemIds.size > 0 ? `(${matchItemIds.size} ชิ้น)` : "(ทั้งหมด)"}
+                  </p>
+                  {matchItemIds.size > 0 && (
+                    <button
+                      type="button"
+                      className="text-xs text-teal-700 underline"
+                      onClick={() => setMatchItemIds(new Set())}
+                    >
+                      ใช้ทั้งหมด
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {wardrobeItems.data.items.map((it: any) => {
+                    const on = matchItemIds.has(it.id);
+                    return (
+                      <button
+                        key={it.id}
+                        type="button"
+                        onClick={() => toggleMatchItem(it.id)}
+                        className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
+                          on ? "border-teal-600" : "border-transparent"
+                        }`}
+                      >
+                        {it.imageUrl ? (
+                          <img src={it.imageUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-warm-100 flex items-center justify-center">
+                            <Shirt className="w-4 h-4 text-warm-200" />
+                          </div>
+                        )}
+                        {on && (
+                          <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-teal-600 flex items-center justify-center">
+                            <Check className="w-3 h-3 text-white" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  ไม่ติ๊ก = ใช้เสื้อผ้าทุกชิ้นในตู้ · ติ๊กเฉพาะชิ้นที่อยากเอามาแมตช์ก็ได้
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-end gap-3">
               <label className="text-xs text-gray-500 flex-1 min-w-[180px]">
                 โอกาส (ไม่บังคับ)
@@ -249,7 +317,11 @@ export default function LookbookPage() {
                 disabled={generate.isPending}
                 onClick={() => {
                   setOverlayDismissed(false);
-                  generate.mutate({ maxLooks, occasion: occasion.trim() || undefined });
+                  generate.mutate({
+                    maxLooks,
+                    occasion: occasion.trim() || undefined,
+                    itemIds: matchItemIds.size ? Array.from(matchItemIds) : undefined,
+                  });
                 }}
               >
                 <Wand2 className="w-4 h-4 mr-2" />
