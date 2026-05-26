@@ -1,8 +1,8 @@
 /**
- * Lookbook Page — ลุคบุ๊ค / AI สไตลิสต์
+ * Lookbook Page — ลุคบุ๊ค / สไตลิสต์ระดับโลก
  * --------------------------------------------------------------------------
  * - ตั้งค่าโปรไฟล์สไตล์ (วันเกิด → สีนำโชค, undertone)
- * - กดให้ AI จัดลุคจากเสื้อผ้าในตู้ (matching.generate)
+ * - กดให้สไตลิสต์จัดลุคจากเสื้อผ้าในตู้ (matching.generate)
  * - แสดงลุคที่บันทึกไว้ (outfits.list) พร้อมคำวิจารณ์สไตลิสต์ + สีนำโชค
  *
  * Route: เพิ่ม <Route path="/lookbook"> ใน App.tsx (ดูไฟล์ App.tsx ที่ให้มาคู่กัน)
@@ -141,7 +141,7 @@ export default function LookbookPage() {
   if (!authLoading && !user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
-        <p className="text-gray-600">เข้าสู่ระบบเพื่อใช้ AI สไตลิสต์</p>
+        <p className="text-gray-600">เข้าสู่ระบบเพื่อใช้ สไตลิสต์ระดับโลก</p>
         <a href={getLoginUrl()}>
           <Button>
             <LogIn className="w-4 h-4 mr-2" /> เข้าสู่ระบบ
@@ -182,7 +182,7 @@ export default function LookbookPage() {
             </Button>
           </Link>
           <h1 className="text-xl font-semibold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-500" /> ลุคบุ๊ค · AI สไตลิสต์
+            <Sparkles className="w-5 h-5 text-amber-500" /> ลุคบุ๊ค · สไตลิสต์ระดับโลก
           </h1>
           <a href="https://sheowa.com" aria-label="หน้าร้าน">
             <Button variant="ghost" size="sm">
@@ -237,7 +237,7 @@ export default function LookbookPage() {
         {/* Generate */}
         <Card className="mb-8">
           <CardContent className="p-5 space-y-3">
-            <p className="text-sm font-medium text-gray-700">ให้ AI จัดลุคจากตู้เสื้อผ้า</p>
+            <p className="text-sm font-medium text-gray-700">ให้สไตลิสต์จัดลุคจากตู้เสื้อผ้า</p>
 
             {/* Pick which wardrobe items to match (tick) — empty = all */}
             {wardrobeItems.data && wardrobeItems.data.items.length > 0 && (
@@ -325,7 +325,7 @@ export default function LookbookPage() {
                 }}
               >
                 <Wand2 className="w-4 h-4 mr-2" />
-                {generate.isPending ? "กำลังจัดลุค..." : "ให้ AI จัดลุค"}
+                {generate.isPending ? "กำลังจัดลุค..." : "ให้สไตลิสต์จัดลุค"}
               </Button>
               <Button
                 variant="outline"
@@ -340,7 +340,7 @@ export default function LookbookPage() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              เพิ่มเสื้อผ้าอย่างน้อย 2 ชิ้นในตู้ แล้วกด "ให้ AI จัดลุค" — ระบบจะเลือกชุดที่เข้ากับสีผิวและสไตล์ของคุณให้อัตโนมัติ
+              เพิ่มเสื้อผ้าอย่างน้อย 2 ชิ้นในตู้ แล้วกด "ให้สไตลิสต์จัดลุค" — ระบบจะเลือกชุดที่เข้ากับสีผิวและสไตล์ของคุณให้อัตโนมัติ
             </p>
             <p className="text-xs text-muted-foreground">
               "จับคู่ข้ามตู้" จะนำเสื้อผ้าที่คนอื่นลงขายมาแมตช์กับตู้ของคุณ พร้อมปุ่มช้อปชิ้นที่ต้องซื้อเพิ่ม
@@ -378,7 +378,7 @@ export default function LookbookPage() {
         {outfits.isLoading ? (
           <p className="text-sm text-gray-400">กำลังโหลด...</p>
         ) : !outfits.data || outfits.data.length === 0 ? (
-          <p className="text-sm text-gray-400">ยังไม่มีลุค — กด "ให้ AI จัดลุค" ด้านบน</p>
+          <p className="text-sm text-gray-400">ยังไม่มีลุค — กด "ให้สไตลิสต์จัดลุค" ด้านบน</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <AnimatePresence>

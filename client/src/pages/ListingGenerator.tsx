@@ -167,7 +167,7 @@ export default function ListingGenerator() {
             {ebayMutation.isPending ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
-                <p className="text-sm text-muted-foreground">AI กำลังสร้าง eBay listing...</p>
+                <p className="text-sm text-muted-foreground">กำลังสร้าง eBay listing...</p>
               </div>
             ) : ebayMutation.data?.listing ? (
               <motion.div
@@ -318,7 +318,7 @@ export default function ListingGenerator() {
             {amazonMutation.isPending ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 text-orange-600 animate-spin mb-3" />
-                <p className="text-sm text-muted-foreground">AI กำลังสร้าง Amazon listing...</p>
+                <p className="text-sm text-muted-foreground">กำลังสร้าง Amazon listing...</p>
               </div>
             ) : amazonMutation.data?.listing ? (
               <motion.div

@@ -30,8 +30,8 @@ interface Props {
 
 const STEPS = [
   { key: "uploading", label: "กำลังอัปโหลดรูปภาพ...", icon: Camera },
-  { key: "analyzing", label: "AI กำลังวิเคราะห์เสื้อผ้า...", icon: Brain },
-  { key: "consensus", label: "AI 3 ตัวกำลังถกกัน...", icon: Brain },
+  { key: "analyzing", label: "สไตลิสต์กำลังดูเสื้อผ้า...", icon: Brain },
+  { key: "consensus", label: "สไตลิสต์กำลังจับคู่ลุค...", icon: Brain },
   { key: "pricing", label: "กำลังคำนวณราคาประเมิน...", icon: Calculator },
   { key: "done", label: "เสร็จสิ้น!", icon: CheckCircle2 },
 ];

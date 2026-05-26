@@ -798,7 +798,7 @@ export default function Home() {
                 {/* Header */}
                 <div className="text-center mb-6">
                   <p className="text-xs font-semibold tracking-[0.2em] uppercase text-warm-800/60 mb-2">
-                    AI Pricing
+                    ประเมินราคาโดยสไตลิสต์
                   </p>
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
                     สแกนเสื้อผ้าเพื่อขาย
@@ -870,7 +870,7 @@ export default function Home() {
                 <div className="flex items-center justify-center gap-1.5 mb-4">
                   <Check className="w-3.5 h-3.5 text-teal-600" />
                   <span className="text-xs text-muted-foreground">
-                    AI วิเคราะห์จริงพร้อมใช้งาน
+                    สไตลิสต์ระดับโลกพร้อมประเมินราคา
                   </span>
                 </div>
 
@@ -993,7 +993,7 @@ export default function Home() {
                       </motion.div>
                       <div className="text-center">
                         <p className="text-sm font-medium text-foreground">กำลังวิเคราะห์...</p>
-                        <p className="text-xs text-muted-foreground mt-1">AI กำลังดูเสื้อผ้าของคุณ</p>
+                        <p className="text-xs text-muted-foreground mt-1">สไตลิสต์กำลังดูเสื้อผ้าของคุณ</p>
                       </div>
                       <FashionTips className="w-full max-w-xs" />
                     </div>
@@ -1016,7 +1016,7 @@ export default function Home() {
                             {activeResult.isRefined ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white bg-teal-600">
                                 <Sparkles className="w-2.5 h-2.5" />
-                                AI verified
+                                ยืนยันแล้ว
                               </span>
                             ) : activeResult.isRefining ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200">
@@ -1047,7 +1047,7 @@ export default function Home() {
                       {/* Category Selector */}
                       <div className="bg-warm-50 rounded-xl p-3.5 border border-warm-200">
                         <label className="text-xs text-muted-foreground mb-1.5 block">
-                          หมวดสินค้า (แก้ได้ถ้า AI อ่านผิด)
+                          หมวดสินค้า (แก้ได้ถ้าอ่านผิด)
                         </label>
                         <Select
                           value={activeResult.editCategory}
@@ -1074,7 +1074,7 @@ export default function Home() {
                       {/* Brand */}
                       <div className="bg-warm-50 rounded-xl p-3.5 border border-warm-200">
                         <label className="text-xs text-muted-foreground mb-1.5 block">
-                          แบรนด์ (แก้ได้ถ้า AI อ่านผิด)
+                          แบรนด์ (แก้ได้ถ้าอ่านผิด)
                         </label>
                         <BrandCombobox
                           value={activeResult.editBrand}

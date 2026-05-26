@@ -173,7 +173,7 @@ export default function HistoryPage() {
                             </Badge>
                             {item.consensusLevel && (
                               <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-purple-200 text-purple-600">
-                                AI {item.agentCount} ตัว
+                                ตรวจ {item.agentCount} รอบ
                               </Badge>
                             )}
                           </div>
