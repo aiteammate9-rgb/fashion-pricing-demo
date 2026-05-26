@@ -164,16 +164,10 @@ export const matchingRouter = router({
         });
       }
 
-      const items = allItems.filter(
-        it => (it.matchingStatus ?? "unmatched") === "unmatched",
-      );
-      if (items.length < 2) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message:
-            "เสื้อผ้าทุกชิ้นในตู้ถูกจัดคู่หรือทำเครื่องหมายว่าไม่มีคู่แล้ว ลองเพิ่มชิ้นใหม่",
-        });
-      }
+      // Use ALL wardrobe items every time — users can re-match existing clothes
+      // without re-uploading. (Previously we only used "unmatched" items, which
+      // blocked re-matching once an item had been used in a look.)
+      const items = allItems;
 
       const luckyColor = analyzeLuckyColors(profile?.birthDate ?? null);
 

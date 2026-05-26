@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Plus, Check, ChevronLeft, ChevronRight, Shirt, Loader2, Sparkles, RotateCcw, UserCircle } from "lucide-react";
+import FashionTips from "@/components/FashionTips";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import GaugeMeter from "@/components/GaugeMeter";
@@ -986,8 +987,9 @@ export default function Home() {
                       </motion.div>
                       <div className="text-center">
                         <p className="text-sm font-medium text-foreground">กำลังวิเคราะห์...</p>
-                        <p className="text-xs text-muted-foreground mt-1">AI กำลังตรวจจับเสื้อผ้า</p>
+                        <p className="text-xs text-muted-foreground mt-1">AI กำลังดูเสื้อผ้าของคุณ</p>
                       </div>
+                      <FashionTips className="w-full max-w-xs" />
                     </div>
                   )}
 
