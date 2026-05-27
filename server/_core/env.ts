@@ -19,9 +19,16 @@ export const ENV = {
   lineChannelId: process.env.LINE_CHANNEL_ID ?? "",
   lineChannelSecret: process.env.LINE_CHANNEL_SECRET ?? "",
   lineCallbackUrl: process.env.LINE_CALLBACK_URL ?? "",
-  // LINE Messaging API (push flex cards / order notifications).
+  // LINE Messaging API (push flex cards / order notifications + AI chat bot).
   // Set LINE_MESSAGING_TOKEN in the environment (never commit it).
   lineMessagingToken: process.env.LINE_MESSAGING_TOKEN ?? "",
+  // Channel secret of the **Messaging API** channel — used to verify the
+  // x-line-signature header on the /line/webhook bot endpoint. (Separate from
+  // the LINE Login channel secret above.) Set LINE_MESSAGING_SECRET in Render.
+  lineMessagingSecret: process.env.LINE_MESSAGING_SECRET ?? "",
+  // Human-handoff contact shown when the bot escalates ("คุยกับแอดมิน").
+  // e.g. https://line.me/R/ti/p/@sheowa  — set LINE_ADMIN_URL in Render.
+  lineAdminUrl: process.env.LINE_ADMIN_URL ?? "",
   // Shared cookie domain so login works across sheowa.com + app.sheowa.com.
   // Set COOKIE_DOMAIN=.sheowa.com in production; leave empty for localhost.
   cookieDomain: process.env.COOKIE_DOMAIN ?? "",

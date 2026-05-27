@@ -5,6 +5,7 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerLineRoutes } from "./lineAuth";
+import { registerLineBot } from "./lineBot";
 import { registerProfileApi } from "./profileApi";
 import { registerCronApi } from "./cronApi";
 import { registerStorageProxy } from "./storageProxy";
@@ -66,8 +67,16 @@ async function startServer() {
     next();
   });
 
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
+  // Configure body parser with larger size limit for file uploads.
+  // Capture the raw body so the LINE bot webhook can verify x-line-signature.
+  app.use(
+    express.json({
+      limit: "50mb",
+      verify: (req, _res, buf) => {
+        (req as any).rawBody = buf;
+      },
+    })
+  );
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get("/health", (_req, res) => {
     res.status(200).json({
@@ -87,6 +96,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerLineRoutes(app);
+  registerLineBot(app);
   registerProfileApi(app);
   registerCronApi(app);
   registerEvaluateStream(app);
