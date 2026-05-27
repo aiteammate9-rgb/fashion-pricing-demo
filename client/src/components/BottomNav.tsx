@@ -9,7 +9,7 @@ import { Sparkles, ShoppingBag, Camera, Shirt, UserCircle } from "lucide-react";
 const ITEMS = [
   { to: "/lookbook", label: "แมตช์ลุค", icon: Sparkles },
   { to: "/shop", label: "ช็อป", icon: ShoppingBag },
-  { to: "/", label: "ขาย", icon: Camera, center: true },
+  { to: "/sell", label: "ขาย", icon: Camera, center: true },
   { to: "/wardrobe", label: "ตู้เสื้อผ้า", icon: Shirt },
   { to: "/profile", label: "บัญชี", icon: UserCircle },
 ] as const;

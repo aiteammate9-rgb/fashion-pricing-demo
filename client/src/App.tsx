@@ -7,6 +7,7 @@ import BottomNav from "./components/BottomNav";
 import WelcomeTour from "./components/WelcomeTour";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Landing from "./pages/Landing";
 import { lazy, Suspense } from "react";
 const History = lazy(() => import("./pages/History"));
 const ListingGenerator = lazy(() => import("./pages/ListingGenerator"));
@@ -27,7 +28,8 @@ function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path="/">{() => <Suspense fallback={<Spinner />}><Home /></Suspense>}</Route>
+      <Route path="/">{() => <Landing />}</Route>
+      <Route path="/sell">{() => <Suspense fallback={<Spinner />}><Home /></Suspense>}</Route>
       <Route path="/history">{() => <Suspense fallback={<Spinner />}><History /></Suspense>}</Route>
       <Route path="/listing">{() => <Suspense fallback={<Spinner />}><ListingGenerator /></Suspense>}</Route>
       <Route path="/wardrobe">{() => <Suspense fallback={<Spinner />}><Wardrobe /></Suspense>}</Route>
