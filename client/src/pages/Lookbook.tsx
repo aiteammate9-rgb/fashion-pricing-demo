@@ -152,14 +152,22 @@ export default function LookbookPage() {
         currentStep="analyzing"
         onClose={() => setOverlayDismissed(true)}
         footerNote={
-          <div className="text-center rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5">
-            <p className="text-[11px] text-emerald-800 leading-relaxed">
-              ปิดหน้านี้แล้วใช้งานต่อได้เลย — เมื่อรูปลุคเสร็จ เราจะส่งการ์ดเข้า LINE ให้อัตโนมัติ ไปดูในไลน์ได้โดยไม่ต้องรอตรงนี้
+          <div className="text-center rounded-2xl bg-white border-2 border-[#06C755]/40 px-4 py-4 shadow-sm">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#06C755] shrink-0">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#ffffff" aria-hidden="true">
+                  <path d="M12 2C6.48 2 2 5.69 2 10.23c0 4.07 3.58 7.48 8.42 8.12.33.07.78.22.89.5.1.26.07.66.03.92l-.14.86c-.04.26-.2 1.01.89.55 1.09-.46 5.86-3.45 8-5.91 1.47-1.62 2.18-3.26 2.18-5.04C22 5.69 17.52 2 12 2z" />
+                </svg>
+              </span>
+              <p className="text-sm font-bold text-foreground">ไม่ต้องรอหน้านี้ — เดี๋ยวเราส่งเข้า LINE ให้</p>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              เมื่อรูปลุคเสร็จ การ์ดจะถูกส่งเข้า <span className="font-semibold text-[#06C755]">LINE</span> ของคุณอัตโนมัติ ปิดหน้านี้แล้วไปทำอย่างอื่นต่อได้เลย
             </p>
             <button
               type="button"
               onClick={() => setOverlayDismissed(true)}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-full px-4 py-1.5"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full px-5 py-2"
             >
               ปิดหน้านี้ ทำอย่างอื่นต่อ
             </button>
