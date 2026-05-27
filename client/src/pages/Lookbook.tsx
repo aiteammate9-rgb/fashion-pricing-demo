@@ -173,8 +173,8 @@ export default function LookbookPage() {
               <ArrowLeft className="w-4 h-4 mr-1" /> หน้าหลัก
             </Button>
           </Link>
-          <h1 className="text-xl font-semibold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-500" /> ลุคบุ๊ค · สไตลิสต์ระดับโลก
+          <h1 className="text-xl font-bold flex items-center gap-2 text-foreground">
+            <Sparkles className="w-5 h-5 text-coral-400" /> แมตช์ลุค
           </h1>
           <div className="flex items-center gap-1">
             <Link href="/calendar" aria-label="ปฏิทินแต่งตัว">
@@ -238,16 +238,6 @@ export default function LookbookPage() {
                 วันเกิดที่บันทึก: {profile.data.birthDate}
               </p>
             )}
-            <button
-              type="button"
-              disabled={migrateImages.isPending}
-              onClick={() => migrateImages.mutate()}
-              className="block text-xs text-gray-400 underline mt-1"
-            >
-              {migrateImages.isPending
-                ? "กำลังอัปเกรดรูปเก่า..."
-                : "อัปเกรดรูปเก่าในตู้ → คลาวด์ (เพื่อให้มี try-on)"}
-            </button>
           </CardContent>
         </Card>
 
@@ -282,7 +272,10 @@ export default function LookbookPage() {
                   <option value={3}>3</option>
                 </select>
               </label>
+            </div>
+            <div className="space-y-2.5 pt-1">
               <Button
+                className="w-full h-12 text-base font-semibold"
                 disabled={generate.isPending}
                 onClick={() => {
                   setOverlayDismissed(false);
@@ -293,10 +286,11 @@ export default function LookbookPage() {
                 }}
               >
                 <Wand2 className="w-4 h-4 mr-2" />
-                {generate.isPending ? "กำลังจัดลุค..." : "ให้สไตลิสต์จัดลุค"}
+                {generate.isPending ? "กำลังจัดลุค..." : "ให้สไตลิสต์จัดลุคให้"}
               </Button>
               <Button
                 variant="outline"
+                className="w-full h-12"
                 disabled={crossMatch.isPending}
                 onClick={() => {
                   setOverlayDismissed(false);

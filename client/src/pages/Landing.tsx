@@ -82,7 +82,7 @@ export default function Landing() {
             const Icon = p.icon;
             return (
               <Link key={p.to} href={p.to}>
-                <div className="flex items-center gap-3 bg-teal-600 rounded-2xl p-4 active:scale-[0.99] transition-transform">
+                <div className="flex items-center gap-3 bg-teal-600 border border-teal-700 rounded-2xl p-4 shadow-sm active:scale-[0.99] transition-transform">
                   <Icon className="w-7 h-7 text-amber-200 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-base font-semibold text-white">{p.title}</p>
