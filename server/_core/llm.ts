@@ -1,4 +1,5 @@
 import { ENV } from "./env";
+import { looksLikeCreditError, notifyCreditExhausted } from "./creditAlert";
 
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
@@ -341,9 +342,12 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+    const full = `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`;
+    // If it looks like exhausted credit/quota, alert the owner via LINE (throttled, non-blocking).
+    if (response.status === 429 || response.status === 402 || looksLikeCreditError(full)) {
+      void notifyCreditExhausted(full);
+    }
+    throw new Error(full);
   }
 
   return (await response.json()) as InvokeResult;

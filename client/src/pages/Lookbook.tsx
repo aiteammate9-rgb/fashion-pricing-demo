@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import AnalysisLoadingOverlay from "@/components/AnalysisLoadingOverlay";
+import ThaiDateSelect from "@/components/ThaiDateSelect";
 
 function ColorSwatches({ palette }: { palette: Array<{ name: string; hex: string }> }) {
   if (!Array.isArray(palette) || palette.length === 0) return null;
@@ -50,6 +51,9 @@ export default function LookbookPage() {
   const [maxLooks, setMaxLooks] = useState(3);
   const [occasion, setOccasion] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [weightKg, setWeightKg] = useState("");
+  const [bodyLoaded, setBodyLoaded] = useState(false);
   const [selectedOutfit, setSelectedOutfit] = useState<any | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -64,6 +68,14 @@ export default function LookbookPage() {
     },
     onError: e => toast.error(`บันทึกไม่สำเร็จ: ${e.message}`),
   });
+
+  // Prefill body fields once from the saved profile.
+  if (profile.data && !bodyLoaded) {
+    setBirthDate(profile.data.birthDate ?? "");
+    setHeightCm(profile.data.heightCm ? String(profile.data.heightCm) : "");
+    setWeightKg(profile.data.weightKg ? String(profile.data.weightKg) : "");
+    setBodyLoaded(true);
+  }
 
   const generate = trpc.matching.generate.useMutation({
     onSuccess: res => {
@@ -220,22 +232,49 @@ export default function LookbookPage() {
         <Card className="mb-6">
           <CardContent className="p-5 space-y-3">
             <p className="text-sm font-medium text-gray-700">โปรไฟล์สไตล์ (วันเกิด → สีนำโชค)</p>
-            <div className="flex flex-wrap items-end gap-3">
-              <label className="text-xs text-gray-500">
-                วันเกิด
-                <input
-                  type="date"
-                  className="block mt-1 border rounded-md px-2 py-1.5 text-sm"
-                  value={birthDate || savedBirthDate}
-                  onChange={e => setBirthDate(e.target.value)}
-                />
-              </label>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">วันเกิด</label>
+                <ThaiDateSelect value={birthDate || savedBirthDate} onChange={setBirthDate} />
+              </div>
+              <div className="flex items-end gap-3">
+                <label className="text-xs text-gray-500">
+                  ส่วนสูง (ซม.)
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={80}
+                    max={250}
+                    placeholder="เช่น 160"
+                    className="block mt-1 w-24 border border-input rounded-md px-2 py-2 text-sm bg-card"
+                    value={heightCm}
+                    onChange={e => setHeightCm(e.target.value)}
+                  />
+                </label>
+                <label className="text-xs text-gray-500">
+                  น้ำหนัก (กก.)
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={20}
+                    max={300}
+                    placeholder="เช่น 50"
+                    className="block mt-1 w-24 border border-input rounded-md px-2 py-2 text-sm bg-card"
+                    value={weightKg}
+                    onChange={e => setWeightKg(e.target.value)}
+                  />
+                </label>
+              </div>
               <Button
                 size="sm"
                 variant="outline"
                 disabled={upsertProfile.isPending}
                 onClick={() =>
-                  upsertProfile.mutate({ birthDate: (birthDate || savedBirthDate) || null })
+                  upsertProfile.mutate({
+                    birthDate: (birthDate || savedBirthDate) || null,
+                    heightCm: heightCm ? Number(heightCm) : null,
+                    weightKg: weightKg ? Number(weightKg) : null,
+                  })
                 }
               >
                 บันทึกโปรไฟล์
@@ -244,6 +283,8 @@ export default function LookbookPage() {
             {profile.data?.birthDate && (
               <p className="text-xs text-gray-500">
                 วันเกิดที่บันทึก: {profile.data.birthDate}
+                {profile.data.heightCm ? ` · ${profile.data.heightCm} ซม.` : ""}
+                {profile.data.weightKg ? ` · ${profile.data.weightKg} กก.` : ""}
               </p>
             )}
           </CardContent>

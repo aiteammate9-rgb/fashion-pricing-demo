@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { LogIn, Save, Camera, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import Logo from "@/components/Logo";
+import ThaiDateSelect from "@/components/ThaiDateSelect";
 
 const SKIN_TONES: Array<{ value: string; label: string }> = [
   { value: "fair", label: "ขาวมาก" },
@@ -66,6 +67,8 @@ export default function ProfilePage() {
   const profile = trpc.profile.me.useQuery(undefined, { enabled: !!user });
 
   const [birthDate, setBirthDate] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [weightKg, setWeightKg] = useState("");
   const [skinTone, setSkinTone] = useState("");
   const [undertone, setUndertone] = useState("");
   const [styles, setStyles] = useState<string[]>([]);
@@ -76,6 +79,8 @@ export default function ProfilePage() {
   // Prefill once from saved profile.
   if (profile.data && !loaded) {
     setBirthDate(profile.data.birthDate ?? "");
+    setHeightCm(profile.data.heightCm ? String(profile.data.heightCm) : "");
+    setWeightKg(profile.data.weightKg ? String(profile.data.weightKg) : "");
     setSkinTone(profile.data.skinTone ?? "");
     setUndertone(profile.data.undertone ?? "");
     setStyles(
@@ -140,6 +145,8 @@ export default function ProfilePage() {
   const onSave = () => {
     upsert.mutate({
       birthDate: birthDate || null,
+      heightCm: heightCm ? Number(heightCm) : null,
+      weightKg: weightKg ? Number(weightKg) : null,
       skinTone: (skinTone || null) as any,
       undertone: (undertone || null) as any,
       preferredStyles: styles.length ? styles.join(", ") : null,
@@ -211,13 +218,37 @@ export default function ProfilePage() {
             {/* Birthdate */}
             <div className="space-y-1.5">
               <Label className="text-xs">วันเดือนปีเกิด (สำหรับสีนำโชค)</Label>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                max="2025-12-31"
-                className="w-full h-11 border border-input rounded-md px-3 text-base bg-card text-foreground"
-              />
+              <ThaiDateSelect value={birthDate} onChange={setBirthDate} />
+            </div>
+
+            {/* Height / weight */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">ส่วนสูง (ซม.)</Label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={80}
+                  max={250}
+                  placeholder="เช่น 160"
+                  value={heightCm}
+                  onChange={(e) => setHeightCm(e.target.value)}
+                  className="w-full h-11 border border-input rounded-md px-3 text-base bg-card text-foreground"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">น้ำหนัก (กก.)</Label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={20}
+                  max={300}
+                  placeholder="เช่น 50"
+                  value={weightKg}
+                  onChange={(e) => setWeightKg(e.target.value)}
+                  className="w-full h-11 border border-input rounded-md px-3 text-base bg-card text-foreground"
+                />
+              </div>
             </div>
 
             {/* Skin tone / undertone */}
@@ -300,7 +331,7 @@ export default function ProfilePage() {
             </div>
 
             <p className="text-[11px] text-muted-foreground">
-              ไม่ต้องกรอกรูปร่าง/ส่วนสูง — AI จะประเมินสัดส่วนและเจนลุคให้เองจากรูปหน้าและสไตล์ที่เลือก
+              ส่วนสูง/น้ำหนักไม่บังคับ — ใส่ไว้ช่วยให้ AI ประเมินสัดส่วนและจัดลุคได้แม่นขึ้น
             </p>
 
             <Button

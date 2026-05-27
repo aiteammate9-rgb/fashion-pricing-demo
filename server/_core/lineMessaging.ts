@@ -15,10 +15,12 @@ import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
 
 const LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push";
-const GOLD = "#B59772";
-const INK = "#3A2E25";
-const MUTED = "#A6957F";
-const SAGE = "#7E8A5F";
+// SHEOWA brand: emerald primary + rose-gold accent + charcoal/eggshell neutrals.
+const PRIMARY = "#0C7355"; // emerald — buttons
+const GOLD = "#B76E79"; // rose-gold accent — price, lucky note, highlights
+const INK = "#2D3532"; // charcoal text
+const MUTED = "#7A857F"; // muted text
+const SAGE = "#2E8B6F"; // success green — confirm headers
 
 export function isLineConfigured(): boolean {
   return !!ENV.lineMessagingToken;
@@ -108,7 +110,7 @@ export function outfitMessage(opts: {
         {
           type: "button",
           style: "primary",
-          color: GOLD,
+          color: PRIMARY,
           height: "sm",
           action: { type: "uri", label: "ดูลุคนี้", uri: opts.appUrl },
         },
@@ -154,7 +156,7 @@ export function calendarMessage(opts: { calendarUrl: string; title?: string; sub
         {
           type: "button",
           style: "primary",
-          color: GOLD,
+          color: PRIMARY,
           height: "sm",
           action: { type: "uri", label: "เปิดปฏิทินแต่งตัว", uri: opts.calendarUrl },
         },
@@ -210,7 +212,7 @@ export function weekFlexMessage(opts: {
           {
             type: "button",
             style: "primary",
-            color: GOLD,
+            color: PRIMARY,
             height: "sm",
             action: { type: "uri", label: "เปิดปฏิทิน", uri: opts.calendarUrl },
           },
