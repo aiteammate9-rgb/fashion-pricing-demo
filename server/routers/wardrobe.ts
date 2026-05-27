@@ -5,7 +5,7 @@
  * Items are saved after scanning/evaluation and stored permanently.
  */
 
-import { eq, desc, and, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, sql, inArray, ne, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -179,6 +179,55 @@ export const wardrobeRouter = router({
           imageUrl3: stripDataUri(item.imageUrl3),
           defects: item.defects ? JSON.parse(item.defects) : [],
         })),
+        total: Number(countResult[0]?.count || 0),
+      };
+    }),
+
+  // Browse all items OTHER users have listed for sale (the Shop page).
+  shopList: protectedProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(60).default(40),
+        offset: z.number().min(0).default(0),
+        category: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { items: [], total: 0 };
+      const conditions = [
+        ne(wardrobe.userId, ctx.user.id),
+        eq(wardrobe.status, "listed"),
+        isNotNull(wardrobe.listedPrice),
+      ];
+      if (input.category) conditions.push(eq(wardrobe.category, input.category));
+      const whereClause = and(...conditions);
+      const rows = await db
+        .select({
+          id: wardrobe.id,
+          sellerUserId: wardrobe.userId,
+          brand: wardrobe.brand,
+          category: wardrobe.category,
+          color: wardrobe.color,
+          size: wardrobe.size,
+          condition: wardrobe.condition,
+          imageUrl: wardrobe.imageUrl,
+          listedPrice: wardrobe.listedPrice,
+          sellabilityScore: wardrobe.sellabilityScore,
+          createdAt: wardrobe.createdAt,
+        })
+        .from(wardrobe)
+        .where(whereClause)
+        .orderBy(desc(wardrobe.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
+      const countResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(wardrobe)
+        .where(whereClause);
+      const stripDataUri = (u: string | null) => (u && u.startsWith("data:") ? null : u);
+      return {
+        items: rows.map(r => ({ ...r, imageUrl: stripDataUri(r.imageUrl) })),
         total: Number(countResult[0]?.count || 0),
       };
     }),

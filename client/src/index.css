@@ -1,6 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -43,66 +43,66 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: 'Anuphan', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  /* Brand palette — matched to the main website: champagne gold + warm cream + sage */
-  --color-warm-50: #FBF5EA;
-  --color-warm-100: #F7EFE1;
-  --color-warm-200: #EBDDC9;
-  --color-warm-800: #6E5D50;
-  --color-warm-900: #3A2E25;
-  /* "teal-*" utilities remapped to champagne gold so the whole app follows the
-     main site palette without editing every component. */
-  --color-teal-50: #FAF3E8;
-  --color-teal-100: #F3E7D4;
-  --color-teal-200: #EBD9BE;
-  --color-teal-300: #DECBB1;
-  --color-teal-400: #D7B488;
-  --color-teal-500: #C9A074;
-  --color-teal-600: #B59772;
-  --color-teal-700: #9C7E55;
-  /* "emerald-*" remapped to the site's sage green (buy / success cues) */
-  --color-emerald-50: #EEF1E6;
-  --color-emerald-200: #D5DBC4;
-  --color-emerald-600: #9DA87E;
-  --color-emerald-700: #7E8A5F;
-  /* "coral-*" remapped to the site's dusty rose accent */
-  --color-coral-400: #D4A0AC;
-  --color-coral-500: #C8899A;
+  /* Brand palette v2 — Emerald + Eggshell + Rose Gold (SHEOWA redesign) */
+  --color-warm-50: #FCFBF9;
+  --color-warm-100: #FAF8F5;   /* Eggshell — main background */
+  --color-warm-200: #EFEAE3;
+  --color-warm-800: #5A5550;
+  --color-warm-900: #2D3532;   /* Slate charcoal — body text */
+  /* "teal-*" utilities remapped to Deep Emerald (primary brand) so the whole
+     app follows the new palette without editing every component. */
+  --color-teal-50: #EAF1EE;
+  --color-teal-100: #D6E4DF;
+  --color-teal-200: #B9D0C9;
+  --color-teal-300: #8FB3A8;
+  --color-teal-400: #4E8475;
+  --color-teal-500: #1E5C4E;
+  --color-teal-600: #0D3C33;   /* primary button / nav */
+  --color-teal-700: #0A2E27;   /* darker hover */
+  /* "emerald-*" remapped to sage / success cues */
+  --color-emerald-50: #EDF2F0;
+  --color-emerald-200: #C9D8D3;
+  --color-emerald-600: #2E8B6F;
+  --color-emerald-700: #246B55;
+  /* "coral-*" remapped to Rose Gold accent (CTA highlight / price / hearts) */
+  --color-coral-400: #B76E79;
+  --color-coral-500: #A05863;
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: #F7EFE1;
-  --foreground: #3A2E25;
+  --radius: 0.875rem;
+  --background: #FAF8F5;       /* eggshell */
+  --foreground: #2D3532;       /* charcoal */
   --card: #FFFFFF;
-  --card-foreground: #3A2E25;
+  --card-foreground: #2D3532;
   --popover: #FFFFFF;
-  --popover-foreground: #3A2E25;
-  --primary: #B59772;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F1E6D3;
-  --secondary-foreground: #6E5D50;
-  --muted: #F3E7D4;
-  --muted-foreground: #A6957F;
-  --accent: #E8ECDC;
-  --accent-foreground: #3A2E25;
+  --popover-foreground: #2D3532;
+  --primary: #0D3C33;          /* deep emerald */
+  --primary-foreground: #FAF8F5;
+  --secondary: #E6ECEB;        /* muted sage */
+  --secondary-foreground: #2D3532;
+  --muted: #EFEAE3;
+  --muted-foreground: #7A857F;
+  --accent: #F3E1E4;           /* light rose */
+  --accent-foreground: #7A3E48;
   --destructive: #C0392B;
   --destructive-foreground: #FFFFFF;
-  --border: #EBDDC9;
-  --input: #DECBB1;
-  --ring: #B59772;
-  --chart-1: #B59772;
-  --chart-2: #C8899A;
-  --chart-3: #9DA87E;
-  --chart-4: #6E5D50;
-  --chart-5: #D7B488;
-  --sidebar: #F7EFE1;
-  --sidebar-foreground: #3A2E25;
-  --sidebar-primary: #B59772;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E8ECDC;
-  --sidebar-accent-foreground: #3A2E25;
-  --sidebar-border: #EBDDC9;
-  --sidebar-ring: #B59772;
+  --border: #D0DDD9;           /* soft laurel */
+  --input: #D0DDD9;
+  --ring: #B76E79;             /* rose gold — active focus */
+  --chart-1: #0D3C33;
+  --chart-2: #B76E79;
+  --chart-3: #2E8B6F;
+  --chart-4: #7A857F;
+  --chart-5: #8FB3A8;
+  --sidebar: #FAF8F5;
+  --sidebar-foreground: #2D3532;
+  --sidebar-primary: #0D3C33;
+  --sidebar-primary-foreground: #FAF8F5;
+  --sidebar-accent: #F3E1E4;
+  --sidebar-accent-foreground: #7A3E48;
+  --sidebar-border: #D0DDD9;
+  --sidebar-ring: #B76E79;
 }
 
 @layer base {

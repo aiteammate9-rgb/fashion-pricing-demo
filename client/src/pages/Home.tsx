@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Plus, Check, ChevronLeft, ChevronRight, Shirt, Loader2, Sparkles, RotateCcw, UserCircle, Home as HomeIcon, CalendarDays } from "lucide-react";
+import Logo from "@/components/Logo";
 import FashionTips from "@/components/FashionTips";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -754,38 +755,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Nav links: matching (lookbook) + wardrobe */}
-      <div className="fixed top-4 right-4 z-40 flex gap-2">
-        <a href="https://sheowa.com">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
+      {/* Top bar: brand logo + storefront link (หลักนำทางอยู่ที่ Bottom Nav แล้ว) */}
+      <div className="sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-background/80 backdrop-blur-md border-b border-border">
+        <Logo size="md" />
+        <a href="https://sheowa.com" aria-label="หน้าร้าน">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
             <HomeIcon className="w-3.5 h-3.5" />
             หน้าร้าน
           </Button>
         </a>
-        <Link href="/lookbook">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
-            <Sparkles className="w-3.5 h-3.5" />
-            แมตช์ชุด
-          </Button>
-        </Link>
-        <Link href="/wardrobe">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
-            <Shirt className="w-3.5 h-3.5" />
-            ตู้เสื้อผ้า
-          </Button>
-        </Link>
-        <Link href="/calendar">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
-            <CalendarDays className="w-3.5 h-3.5" />
-            ปฏิทินแต่งตัว
-          </Button>
-        </Link>
-        <Link href="/profile">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs bg-white/90 backdrop-blur-sm shadow-sm">
-            <UserCircle className="w-3.5 h-3.5" />
-            โปรไฟล์
-          </Button>
-        </Link>
       </div>
 
       <AnimatePresence mode="wait">
@@ -803,17 +781,25 @@ export default function Home() {
               <div className="bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-lg relative">
                 {/* Header */}
                 <div className="text-center mb-6">
-                  <p className="text-xs font-semibold tracking-[0.2em] uppercase text-warm-800/60 mb-2">
-                    ประเมินราคาโดยสไตลิสต์
+                  <p className="text-xs font-semibold tracking-[0.2em] uppercase text-teal-700/70 mb-2">
+                    ขายเสื้อผ้า
                   </p>
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
-                    สแกนเสื้อผ้าเพื่อขาย
+                    ถ่ายรูป รู้ราคาที่ขายได้จริง
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    อัพรูป 3 ด้าน: หน้า (จำเป็น) · หลัง · ตำหนิ แล้วกดประเมิน
+                    สไตลิสต์ช่วยตีราคาให้ฟรี ในไม่กี่วินาที
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    สแกนได้สูงสุด {MAX_ITEMS} ชุดต่อครั้ง
+                  {/* ขั้นตอน 1-2-3 ภาษาคนธรรมดา */}
+                  <div className="flex items-center justify-center gap-1.5 mt-4 text-xs">
+                    <span className="px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 font-medium">1 ถ่ายรูป</span>
+                    <span className="text-muted-foreground">›</span>
+                    <span className="px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 font-medium">2 ดูราคา</span>
+                    <span className="text-muted-foreground">›</span>
+                    <span className="px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 font-medium">3 ลงขาย</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    ถ่ายด้านหน้า (ต้องมี) · ด้านหลัง · จุดตำหนิ — ได้สูงสุด {MAX_ITEMS} ชุดต่อครั้ง
                   </p>
                 </div>
 

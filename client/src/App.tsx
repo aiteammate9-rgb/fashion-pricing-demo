@@ -3,6 +3,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import BottomNav from "./components/BottomNav";
+import WelcomeTour from "./components/WelcomeTour";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import { lazy, Suspense } from "react";
@@ -12,6 +14,8 @@ const Wardrobe = lazy(() => import("./pages/Wardrobe"));
 const Lookbook = lazy(() => import("./pages/Lookbook"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Calendar = lazy(() => import("./pages/Calendar"));
+const Shop = lazy(() => import("./pages/Shop"));
+const Knowledge = lazy(() => import("./pages/Knowledge"));
 
 const Spinner = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -30,6 +34,8 @@ function Router() {
       <Route path="/lookbook">{() => <Suspense fallback={<Spinner />}><Lookbook /></Suspense>}</Route>
       <Route path="/profile">{() => <Suspense fallback={<Spinner />}><Profile /></Suspense>}</Route>
       <Route path="/calendar">{() => <Suspense fallback={<Spinner />}><Calendar /></Suspense>}</Route>
+      <Route path="/shop">{() => <Suspense fallback={<Spinner />}><Shop /></Suspense>}</Route>
+      <Route path="/knowledge">{() => <Suspense fallback={<Spinner />}><Knowledge /></Suspense>}</Route>
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -51,7 +57,11 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <div className="pb-16">
+            <Router />
+          </div>
+          <BottomNav />
+          <WelcomeTour />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
