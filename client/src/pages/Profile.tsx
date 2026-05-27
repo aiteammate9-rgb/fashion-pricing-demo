@@ -12,9 +12,9 @@ import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, LogIn, Save, Camera, Sparkles, UserCircle, Home } from "lucide-react";
+import { LogIn, Save, Camera, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "wouter";
+import Logo from "@/components/Logo";
 
 const SKIN_TONES: Array<{ value: string; label: string }> = [
   { value: "fair", label: "ขาวมาก" },
@@ -163,25 +163,23 @@ export default function ProfilePage() {
   const currentPhoto = photoPreview || profile.data?.profilePhotoUrl || null;
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
-      <div className="max-w-xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-1" /> หน้าหลัก
-            </Button>
-          </Link>
-          <h1 className="text-xl font-semibold flex items-center gap-2">
-            <UserCircle className="w-5 h-5 text-teal-600" /> โปรไฟล์สไตล์
-          </h1>
-          <a href="https://sheowa.com" aria-label="หน้าร้าน">
-            <Button variant="ghost" size="sm">
-              <Home className="w-4 h-4" />
-            </Button>
-          </a>
+    <div className="min-h-screen bg-background">
+      {/* Top bar */}
+      <div className="sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-background/80 backdrop-blur-md border-b border-border">
+        <Logo size="md" />
+        <a href="https://sheowa.com" aria-label="หน้าร้าน">
+          <Button variant="outline" size="sm" className="text-xs">หน้าร้าน</Button>
+        </a>
+      </div>
+
+      <div className="max-w-xl mx-auto px-4 py-4">
+        {/* Greeting */}
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-foreground">บัญชีของฉัน</h1>
+          <p className="text-sm text-muted-foreground">ตั้งค่าครั้งเดียว ใช้แมตช์ลุคได้ทุกวัน</p>
         </div>
 
-        <Card className="mb-5">
+        <Card className="mb-5 border-2 border-teal-100 rounded-2xl">
           <CardContent className="p-5 space-y-5">
             {/* Face photo */}
             <div className="flex items-center gap-4">
@@ -306,11 +304,11 @@ export default function ProfilePage() {
             </p>
 
             <Button
-              className="w-full bg-teal-600 hover:bg-teal-700"
+              className="w-full h-14 rounded-2xl text-base bg-teal-600 hover:bg-teal-700"
               disabled={upsert.isPending}
               onClick={onSave}
             >
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-5 h-5 mr-2" />
               {upsert.isPending ? "กำลังบันทึก..." : "บันทึกโปรไฟล์"}
             </Button>
           </CardContent>

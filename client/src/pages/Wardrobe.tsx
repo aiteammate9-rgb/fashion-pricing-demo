@@ -40,11 +40,11 @@ import {
   RotateCw,
   Check,
   Trash,
-  Home,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Link } from "wouter";
+import Logo from "@/components/Logo";
 import { CATEGORIES, CATEGORY_GROUPS } from "@/lib/pricing-engine";
 
 export default function WardrobePage() {
@@ -192,41 +192,31 @@ export default function WardrobePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container flex items-center justify-between h-14">
-          <div className="flex items-center gap-3">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="gap-1.5">
-                <ArrowLeft className="w-4 h-4" />
-                กลับ
-              </Button>
-            </Link>
-            <a href="https://sheowa.com" aria-label="หน้าร้าน">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Home className="w-4 h-4" />
-              </Button>
-            </a>
-            <div className="flex items-center gap-2">
-              <Shirt className="w-5 h-5 text-teal-600" />
-              <h1 className="text-sm font-bold text-foreground">ตู้เสื้อผ้า</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {stats.data && (
-              <span className="text-xs text-muted-foreground">
-                {stats.data.total} ชิ้น
-              </span>
-            )}
-            <Link href="/">
-              <Button size="sm" className="gap-1.5 text-xs bg-teal-600 hover:bg-teal-700">
-                <ScanLine className="w-3.5 h-3.5" />
-                สแกนเพิ่ม
-              </Button>
-            </Link>
-          </div>
-        </div>
+      {/* Top bar */}
+      <header className="sticky top-0 z-50 flex items-center justify-between px-4 h-14 bg-background/80 backdrop-blur-md border-b border-border">
+        <Logo size="md" />
+        <a href="https://sheowa.com" aria-label="หน้าร้าน">
+          <Button variant="outline" size="sm" className="text-xs">หน้าร้าน</Button>
+        </a>
       </header>
+
+      {/* Greeting */}
+      <div className="container pt-4 pb-1 flex items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Shirt className="w-5 h-5 text-teal-600" /> ตู้เสื้อผ้า
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {stats.data ? `มี ${stats.data.total} ชิ้นในตู้` : "เสื้อผ้าทั้งหมดของคุณ"}
+          </p>
+        </div>
+        <Link href="/sell">
+          <Button size="sm" className="gap-1.5 text-xs bg-teal-600 hover:bg-teal-700 rounded-xl">
+            <ScanLine className="w-3.5 h-3.5" />
+            สแกนเพิ่ม
+          </Button>
+        </Link>
+      </div>
 
       {/* Stats Bar */}
       {stats.data && stats.data.byCategory.length > 0 && (
