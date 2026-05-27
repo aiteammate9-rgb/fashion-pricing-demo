@@ -44,14 +44,16 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
-      <div className="sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-background/80 backdrop-blur-md border-b border-border">
-        <Logo size="md" />
-        <a href="https://sheowa.com" aria-label="หน้าร้าน">
-          <Button variant="outline" size="sm" className="text-xs">หน้าร้าน</Button>
-        </a>
+      <div className="sticky top-0 z-40 h-14 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-md mx-auto h-full flex items-center justify-between px-4">
+          <Logo size="md" />
+          <a href="https://sheowa.com" aria-label="หน้าร้าน">
+            <Button variant="outline" size="sm" className="text-xs">หน้าร้าน</Button>
+          </a>
+        </div>
       </div>
 
-      <main className="px-4 py-4 space-y-5">
+      <main className="max-w-md mx-auto px-4 py-4 space-y-5">
         {/* Greeting */}
         <div>
           <h1 className="text-xl font-bold text-foreground">สวัสดีค่ะ 👋</h1>
