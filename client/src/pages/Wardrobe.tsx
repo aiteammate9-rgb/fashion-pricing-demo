@@ -466,7 +466,7 @@ export default function WardrobePage() {
                         {/* Price tag */}
                         {item.recommendedPrice && (
                           <div className="absolute bottom-2 right-2 z-10 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
-                            <p className="text-xs font-bold font-mono" style={{ color: "#a08b7a" }}>
+                            <p className="text-xs font-bold font-mono" style={{ color: "#0F8A66" }}>
                               ฿{item.recommendedPrice.toLocaleString()}
                             </p>
                           </div>

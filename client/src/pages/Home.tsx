@@ -116,9 +116,9 @@ function createScanItem(id: number): ScanItem {
   return {
     id,
     imageSlots: [
-      { label: "ด้านหน้า *", required: true, file: null, preview: null },
-      { label: "ด้านหลัง *", required: true, file: null, preview: null },
-      { label: "ตำหนิ", required: false, file: null, preview: null },
+      { label: "ด้านหน้า", required: true, file: null, preview: null },
+      { label: "ด้านหลัง", required: false, file: null, preview: null },
+      { label: "จุดตำหนิ", required: false, file: null, preview: null },
     ],
   };
 }
@@ -858,11 +858,11 @@ export default function Home() {
                   </button>
                 )}
 
-                {/* AI Ready Badge */}
-                <div className="flex items-center justify-center gap-1.5 mb-4">
-                  <Check className="w-3.5 h-3.5 text-teal-600" />
-                  <span className="text-xs text-muted-foreground">
-                    สไตลิสต์ระดับโลกพร้อมประเมินราคา
+                {/* Tip — ถ่ายให้แม่น */}
+                <div className="flex items-start gap-2 mb-4 bg-teal-50 rounded-xl px-3 py-2.5">
+                  <Sparkles className="w-4 h-4 text-teal-600 mt-0.5 shrink-0" />
+                  <span className="text-xs text-teal-800">
+                    ถ่ายในที่สว่าง วางบนพื้นเรียบ ให้เห็นทั้งตัว จะตีราคาได้แม่นขึ้น
                   </span>
                 </div>
 
@@ -870,13 +870,13 @@ export default function Home() {
                 <Button
                   onClick={handleEvaluate}
                   disabled={!hasAnyImages || stream.isStreaming}
-                  className="w-full h-12 rounded-full text-sm font-semibold shadow-md transition-all duration-200"
+                  className="w-full h-14 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 active:scale-[0.99] disabled:opacity-60"
                   style={{
-                    backgroundColor: hasAnyImages ? "#a08b7a" : "#d4c8be",
+                    backgroundColor: hasAnyImages ? "#0F8A66" : "#A3DBC7",
                     color: "white",
                   }}
                 >
-                  {`วิเคราะห์ราคา${scanItems.filter((i) => i.imageSlots.some((s) => s.file)).length > 1 ? ` (${scanItems.filter((i) => i.imageSlots.some((s) => s.file)).length} ชุด)` : ""}`}
+                  {`ดูราคาเลย${scanItems.filter((i) => i.imageSlots.some((s) => s.file)).length > 1 ? ` (${scanItems.filter((i) => i.imageSlots.some((s) => s.file)).length} ชุด)` : ""}`}
                 </Button>
               </div>
             </div>
@@ -911,7 +911,7 @@ export default function Home() {
                         onClick={() => setActiveResultIndex(idx)}
                         className={`w-2.5 h-2.5 rounded-full transition-all ${
                           idx === activeResultIndex
-                            ? "bg-[#a08b7a] scale-125"
+                            ? "bg-[#0F8A66] scale-125"
                             : item.savedToWardrobe
                             ? "bg-teal-400"
                             : item.recommendedPrice > 0
@@ -1016,7 +1016,7 @@ export default function Home() {
                                 กำลัง refine
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ backgroundColor: "#a08b7a" }}>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ backgroundColor: "#0F8A66" }}>
                                 ประเมินแล้ว
                               </span>
                             )}
@@ -1154,11 +1154,11 @@ export default function Home() {
                       {/* Price Recommendation (with animation on refine) */}
                       <motion.div
                         key={`price-${activeResultIndex}-${activeResult.isRefined}`}
-                        initial={activeResult.isRefined ? { scale: 1.02, borderColor: "#0d9488" } : {}}
+                        initial={activeResult.isRefined ? { scale: 1.02, borderColor: "#0F8A66" } : {}}
                         animate={{ scale: 1, borderColor: "transparent" }}
                         transition={{ duration: 0.5 }}
                         className={`rounded-xl p-4 text-center ${
-                          activeResult.isRefined ? "bg-teal-50 border-2 border-teal-200" : "bg-[#f8ebe5]"
+                          activeResult.isRefined ? "bg-teal-50 border-2 border-teal-200" : "bg-[#E9F7F1]"
                         }`}
                       >
                         <div className="flex items-center justify-center gap-2 mb-1">
@@ -1176,7 +1176,7 @@ export default function Home() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
                           className="text-3xl font-bold font-mono"
-                          style={{ color: activeResult.isRefined ? "#0d9488" : "#a08b7a" }}
+                          style={{ color: activeResult.isRefined ? "#0F8A66" : "#0F8A66" }}
                         >
                           ฿{activeResult.recommendedPrice.toLocaleString()}
                         </motion.p>
@@ -1192,7 +1192,7 @@ export default function Home() {
                             <GaugeMeter score={activeResult.sellabilityScore} label="" size={100} />
                           </div>
                           <div>
-                            <p className="text-base font-bold" style={{ color: "#a08b7a" }}>
+                            <p className="text-base font-bold" style={{ color: "#0F8A66" }}>
                               {getSellabilityInfo(activeResult.sellabilityScore).label}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -1224,7 +1224,7 @@ export default function Home() {
                           <Button
                             onClick={() => handleSaveToWardrobe(activeResultIndex)}
                             className="h-11 rounded-full text-sm font-semibold text-white"
-                            style={{ backgroundColor: "#a08b7a" }}
+                            style={{ backgroundColor: "#0F8A66" }}
                             disabled={saveWardrobe.isPending || activeResult.recommendedPrice === 0 || activeResult.isRefining}
                           >
                             {saveWardrobe.isPending ? "กำลังบันทึก..." : activeResult.isRefining ? "กำลังวิเคราะห์..." : "บันทึกเข้าตู้"}
@@ -1300,7 +1300,7 @@ export default function Home() {
                             onClick={handleSaveSelectedToWardrobe}
                             disabled={saveWardrobe.isPending || !resultItems.some((r) => r.selectedForWardrobe && !r.savedToWardrobe && r.recommendedPrice > 0)}
                             className="w-full h-10 rounded-full text-xs font-medium text-white"
-                            style={{ backgroundColor: "#a08b7a" }}
+                            style={{ backgroundColor: "#0F8A66" }}
                           >
                             <Shirt className="w-3.5 h-3.5 mr-1.5" />
                             {saveWardrobe.isPending

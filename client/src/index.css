@@ -49,16 +49,15 @@
   --color-warm-200: #EFEAE3;
   --color-warm-800: #5A5550;
   --color-warm-900: #2D3532;   /* Slate charcoal — body text */
-  /* "teal-*" utilities remapped to Deep Emerald (primary brand) so the whole
-     app follows the new palette without editing every component. */
-  --color-teal-50: #EAF1EE;
-  --color-teal-100: #D6E4DF;
-  --color-teal-200: #B9D0C9;
-  --color-teal-300: #8FB3A8;
-  --color-teal-400: #4E8475;
-  --color-teal-500: #1E5C4E;
-  --color-teal-600: #0D3C33;   /* primary button / nav */
-  --color-teal-700: #0A2E27;   /* darker hover */
+  /* "teal-*" utilities remapped to a brighter jewel Emerald (primary brand). */
+  --color-teal-50: #E9F7F1;
+  --color-teal-100: #CDEBE0;
+  --color-teal-200: #A3DBC7;
+  --color-teal-300: #67C2A3;
+  --color-teal-400: #2BA77F;
+  --color-teal-500: #15916C;
+  --color-teal-600: #0F8A66;   /* primary button / nav — vivid jade emerald */
+  --color-teal-700: #0B6E52;   /* darker hover */
   /* "emerald-*" remapped to sage / success cues */
   --color-emerald-50: #EDF2F0;
   --color-emerald-200: #C9D8D3;
@@ -77,7 +76,7 @@
   --card-foreground: #2D3532;
   --popover: #FFFFFF;
   --popover-foreground: #2D3532;
-  --primary: #0D3C33;          /* deep emerald */
+  --primary: #0F8A66;          /* deep emerald */
   --primary-foreground: #FAF8F5;
   --secondary: #E6ECEB;        /* muted sage */
   --secondary-foreground: #2D3532;
@@ -90,14 +89,14 @@
   --border: #D0DDD9;           /* soft laurel */
   --input: #D0DDD9;
   --ring: #B76E79;             /* rose gold — active focus */
-  --chart-1: #0D3C33;
+  --chart-1: #0F8A66;
   --chart-2: #B76E79;
   --chart-3: #2E8B6F;
   --chart-4: #7A857F;
   --chart-5: #8FB3A8;
   --sidebar: #FAF8F5;
   --sidebar-foreground: #2D3532;
-  --sidebar-primary: #0D3C33;
+  --sidebar-primary: #0F8A66;
   --sidebar-primary-foreground: #FAF8F5;
   --sidebar-accent: #F3E1E4;
   --sidebar-accent-foreground: #7A3E48;
