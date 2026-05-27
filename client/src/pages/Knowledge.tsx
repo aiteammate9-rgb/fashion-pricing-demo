@@ -85,6 +85,18 @@ export default function KnowledgePage() {
           เคล็ดลับแต่งตัวง่าย ๆ ให้ดูดีในทุกวัน — แตะหัวข้อเพื่ออ่าน
         </p>
 
+        <a
+          href="https://sheowa.com/blog"
+          className="flex items-center gap-3 bg-teal-600 border border-teal-700 rounded-2xl px-4 py-3.5 shadow-sm active:scale-[0.99] transition-transform"
+        >
+          <BookOpen className="w-5 h-5 text-amber-200 shrink-0" />
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-semibold text-white">อ่านบทความแฟชั่นเต็ม ๆ</span>
+            <span className="block text-xs text-teal-100/90">รวมบทความแต่งตัว ขาย-ช็อปมือสอง และสีมงคล</span>
+          </span>
+          <span className="text-teal-100/80">›</span>
+        </a>
+
         {TOPICS.map((t, i) => {
           const Icon = t.icon;
           const isOpen = open === i;
