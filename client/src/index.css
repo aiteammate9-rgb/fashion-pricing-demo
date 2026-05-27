@@ -56,8 +56,8 @@
   --color-teal-300: #67C2A3;
   --color-teal-400: #2BA77F;
   --color-teal-500: #15916C;
-  --color-teal-600: #0F8A66;   /* primary button / nav — vivid jade emerald */
-  --color-teal-700: #0B6E52;   /* darker hover */
+  --color-teal-600: #0C7355;   /* primary button / nav — vivid jade emerald */
+  --color-teal-700: #095A42;   /* darker hover */
   /* "emerald-*" remapped to sage / success cues */
   --color-emerald-50: #EDF2F0;
   --color-emerald-200: #C9D8D3;
@@ -76,7 +76,7 @@
   --card-foreground: #2D3532;
   --popover: #FFFFFF;
   --popover-foreground: #2D3532;
-  --primary: #0F8A66;          /* deep emerald */
+  --primary: #0C7355;          /* deep emerald */
   --primary-foreground: #FAF8F5;
   --secondary: #E6ECEB;        /* muted sage */
   --secondary-foreground: #2D3532;
@@ -89,14 +89,14 @@
   --border: #D0DDD9;           /* soft laurel */
   --input: #D0DDD9;
   --ring: #B76E79;             /* rose gold — active focus */
-  --chart-1: #0F8A66;
+  --chart-1: #0C7355;
   --chart-2: #B76E79;
   --chart-3: #2E8B6F;
   --chart-4: #7A857F;
   --chart-5: #8FB3A8;
   --sidebar: #FAF8F5;
   --sidebar-foreground: #2D3532;
-  --sidebar-primary: #0F8A66;
+  --sidebar-primary: #0C7355;
   --sidebar-primary-foreground: #FAF8F5;
   --sidebar-accent: #F3E1E4;
   --sidebar-accent-foreground: #7A3E48;

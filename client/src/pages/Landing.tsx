@@ -132,9 +132,9 @@ export default function Landing() {
             const Icon = s.icon;
             return (
               <Link key={s.to} href={s.to}>
-                <div className="bg-card border border-border rounded-2xl py-3.5 text-center">
+                <div className="bg-card border-2 border-teal-100 rounded-2xl py-4 text-center shadow-sm active:scale-[0.98] transition-transform">
                   <Icon className="w-6 h-6 text-teal-700 mx-auto" />
-                  <p className="text-[11px] text-foreground mt-1">{s.label}</p>
+                  <p className="text-xs text-foreground mt-1.5 font-medium">{s.label}</p>
                 </div>
               </Link>
             );

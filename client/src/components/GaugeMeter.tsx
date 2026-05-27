@@ -26,8 +26,8 @@ export default function GaugeMeter({ score, label, size = 160 }: Props) {
 
   // Color based on score
   const getColor = (s: number) => {
-    if (s >= 80) return { stroke: "#0F8A66", text: "ขายง่ายมาก", bg: "bg-teal-50", textColor: "text-teal-700" };
-    if (s >= 65) return { stroke: "#0F8A66", text: "ขายง่าย", bg: "bg-teal-50", textColor: "text-teal-600" };
+    if (s >= 80) return { stroke: "#0C7355", text: "ขายง่ายมาก", bg: "bg-teal-50", textColor: "text-teal-700" };
+    if (s >= 65) return { stroke: "#0C7355", text: "ขายง่าย", bg: "bg-teal-50", textColor: "text-teal-600" };
     if (s >= 50) return { stroke: "#f59e0b", text: "พอขายได้", bg: "bg-amber-50", textColor: "text-amber-600" };
     return { stroke: "#f97066", text: "ขายยาก", bg: "bg-red-50", textColor: "text-red-500" };
   };

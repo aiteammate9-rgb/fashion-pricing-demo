@@ -872,7 +872,7 @@ export default function Home() {
                   disabled={!hasAnyImages || stream.isStreaming}
                   className="w-full h-14 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 active:scale-[0.99] disabled:opacity-60"
                   style={{
-                    backgroundColor: hasAnyImages ? "#0F8A66" : "#A3DBC7",
+                    backgroundColor: hasAnyImages ? "#0C7355" : "#A3DBC7",
                     color: "white",
                   }}
                 >
@@ -911,7 +911,7 @@ export default function Home() {
                         onClick={() => setActiveResultIndex(idx)}
                         className={`w-2.5 h-2.5 rounded-full transition-all ${
                           idx === activeResultIndex
-                            ? "bg-[#0F8A66] scale-125"
+                            ? "bg-[#0C7355] scale-125"
                             : item.savedToWardrobe
                             ? "bg-teal-400"
                             : item.recommendedPrice > 0
@@ -1016,7 +1016,7 @@ export default function Home() {
                                 กำลัง refine
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ backgroundColor: "#0F8A66" }}>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ backgroundColor: "#0C7355" }}>
                                 ประเมินแล้ว
                               </span>
                             )}
@@ -1154,7 +1154,7 @@ export default function Home() {
                       {/* Price Recommendation (with animation on refine) */}
                       <motion.div
                         key={`price-${activeResultIndex}-${activeResult.isRefined}`}
-                        initial={activeResult.isRefined ? { scale: 1.02, borderColor: "#0F8A66" } : {}}
+                        initial={activeResult.isRefined ? { scale: 1.02, borderColor: "#0C7355" } : {}}
                         animate={{ scale: 1, borderColor: "transparent" }}
                         transition={{ duration: 0.5 }}
                         className={`rounded-xl p-4 text-center ${
@@ -1176,7 +1176,7 @@ export default function Home() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
                           className="text-3xl font-bold font-mono"
-                          style={{ color: activeResult.isRefined ? "#0F8A66" : "#0F8A66" }}
+                          style={{ color: activeResult.isRefined ? "#0C7355" : "#0C7355" }}
                         >
                           ฿{activeResult.recommendedPrice.toLocaleString()}
                         </motion.p>
@@ -1192,7 +1192,7 @@ export default function Home() {
                             <GaugeMeter score={activeResult.sellabilityScore} label="" size={100} />
                           </div>
                           <div>
-                            <p className="text-base font-bold" style={{ color: "#0F8A66" }}>
+                            <p className="text-base font-bold" style={{ color: "#0C7355" }}>
                               {getSellabilityInfo(activeResult.sellabilityScore).label}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -1224,7 +1224,7 @@ export default function Home() {
                           <Button
                             onClick={() => handleSaveToWardrobe(activeResultIndex)}
                             className="h-11 rounded-full text-sm font-semibold text-white"
-                            style={{ backgroundColor: "#0F8A66" }}
+                            style={{ backgroundColor: "#0C7355" }}
                             disabled={saveWardrobe.isPending || activeResult.recommendedPrice === 0 || activeResult.isRefining}
                           >
                             {saveWardrobe.isPending ? "กำลังบันทึก..." : activeResult.isRefining ? "กำลังวิเคราะห์..." : "บันทึกเข้าตู้"}
@@ -1300,7 +1300,7 @@ export default function Home() {
                             onClick={handleSaveSelectedToWardrobe}
                             disabled={saveWardrobe.isPending || !resultItems.some((r) => r.selectedForWardrobe && !r.savedToWardrobe && r.recommendedPrice > 0)}
                             className="w-full h-10 rounded-full text-xs font-medium text-white"
-                            style={{ backgroundColor: "#0F8A66" }}
+                            style={{ backgroundColor: "#0C7355" }}
                           >
                             <Shirt className="w-3.5 h-3.5 mr-1.5" />
                             {saveWardrobe.isPending
