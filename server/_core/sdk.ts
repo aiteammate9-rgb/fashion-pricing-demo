@@ -235,6 +235,10 @@ class SDKServer {
   async getUserInfoWithJwt(
     jwtToken: string
   ): Promise<GetUserInfoWithJwtResponse> {
+    // FAST FAIL: skip Manus OAuth HTTP call when not configured (LINE Login is the real auth). Prevents 30s axios hang causing white-screen.
+    if (!ENV.oAuthServerUrl) {
+      throw new Error("OAUTH_SERVER_URL not configured (Manus auth disabled)");
+    }
     const payload: GetUserInfoWithJwtRequest = {
       jwtToken,
       projectId: ENV.appId,
