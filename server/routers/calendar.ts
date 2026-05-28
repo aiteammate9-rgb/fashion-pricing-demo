@@ -25,7 +25,7 @@ import { luckyNoteForDate } from "../luckyColor";
 import { fetchWeatherNotes } from "../_core/weather";
 import { pushToUser, weekFlexMessage } from "../_core/lineMessaging";
 
-const APP_BASE_URL = (process.env.APP_PUBLIC_URL || "https://fashion-pricing-demo.onrender.com").replace(/\/+$/, "");
+const APP_BASE_URL = (process.env.APP_PUBLIC_URL || "https://app.sheowa.com").replace(/\/+$/, "");
 const APP_CALENDAR_URL = `${APP_BASE_URL}/calendar`;
 
 /** Bangkok-local "today" as yyyy-mm-dd (en-CA gives ISO order). */

@@ -20,7 +20,7 @@ import { outfitCalendar, outfitRecommendations } from "../../drizzle/schema";
 import { pushToUser, outfitMessage, weekFlexMessage } from "./lineMessaging";
 import { luckyNoteForDate } from "../luckyColor";
 
-const APP_BASE_URL = (process.env.APP_PUBLIC_URL || "https://fashion-pricing-demo.onrender.com").replace(/\/+$/, "");
+const APP_BASE_URL = (process.env.APP_PUBLIC_URL || "https://app.sheowa.com").replace(/\/+$/, "");
 const APP_CALENDAR_URL = `${APP_BASE_URL}/calendar`;
 
 function bkkToday(): string {
