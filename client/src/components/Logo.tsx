@@ -1,40 +1,34 @@
 /**
- * Logo — SHEOWA wordmark "Star Aura" direction
- * ตัวอักษรเขียวมรกต + ดาว 4 แฉกสีโรสโกลด์มุมขวาบน (เป็นมิตร สดใส มีคลาส)
- * ใช้ฟอนต์ Anuphan (ผ่าน --font-sans) ขนาดปรับด้วย prop size
+ * Logo — SHEOWA brand mark (uploaded logo: curved S + sparkle + wordmark).
+ * Uses the real PNG logo served from /public.
+ *  - variant "dark"  → dark logo for light surfaces (default; eggshell top bars)
+ *  - variant "cream" → light logo for dark/photo surfaces
+ * Height scales with the `size` prop.
  */
 type Size = "sm" | "md" | "lg";
+type Variant = "dark" | "cream";
 
-const SIZES: Record<Size, { text: string; star: number }> = {
-  sm: { text: "text-lg", star: 12 },
-  md: { text: "text-2xl", star: 16 },
-  lg: { text: "text-4xl", star: 22 },
-};
+const HEIGHTS: Record<Size, number> = { sm: 22, md: 28, lg: 38 };
 
 export default function Logo({
   size = "md",
+  variant = "dark",
   className = "",
 }: {
   size?: Size;
+  variant?: Variant;
   className?: string;
 }) {
-  const s = SIZES[size];
+  const h = HEIGHTS[size];
+  const src = variant === "cream" ? "/sheowa-logo-cream.png" : "/sheowa-logo.png";
   return (
-    <span className={`relative inline-flex items-start font-bold tracking-wide text-teal-600 ${s.text} ${className}`}>
-      SHEOWA
-      <svg
-        width={s.star}
-        height={s.star}
-        viewBox="0 0 24 24"
-        className="ml-0.5 -mt-0.5 shrink-0"
-        aria-hidden="true"
-      >
-        {/* 4-point sparkle (rose gold) */}
-        <path
-          d="M12 0 C13 7 17 11 24 12 C17 13 13 17 12 24 C11 17 7 13 0 12 C7 11 11 7 12 0 Z"
-          fill="#B76E79"
-        />
-      </svg>
-    </span>
+    <img
+      src={src}
+      alt="SHEOWA"
+      height={h}
+      style={{ height: h, width: "auto" }}
+      className={`inline-block select-none ${className}`}
+      draggable={false}
+    />
   );
 }
