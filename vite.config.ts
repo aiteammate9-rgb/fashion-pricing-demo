@@ -170,6 +170,10 @@ export default defineConfig({
     // Lock the output syntax to what older iOS Safari can run — avoids
     // white-screen on iOS WebKit when esbuild emits newer syntax.
     target: ["es2020", "safari14", "chrome87", "firefox78", "edge88"],
+    // Same target for CSS so Lightning CSS down-levels @layer / nesting /
+    // color-mix etc. that iOS Safari < 16.4 can't parse (otherwise the entire
+    // Tailwind stylesheet silently drops, leaving an unstyled page on iOS).
+    cssTarget: ["safari14"],
   },
   server: {
     host: true,
