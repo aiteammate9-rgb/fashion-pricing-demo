@@ -496,6 +496,11 @@ const DEFECT_MULTIPLIER: Record<string, number> = {
   major: 0.50,
 };
 
+// Market uplift — bumps every estimate up because real Thai resale prices for
+// good-condition women's fashion run higher than the strict rule output.
+// Tune this single number (1.0 = no change, 1.2 = +20%).
+const MARKET_UPLIFT = 1.20;
+
 const SIZE_DEMAND_SCORE: Record<string, number> = {
   xs: 66, s: 78, m: 84, l: 80, xl: 72, xxl: 64, "free size": 76, unknown: 65,
 };
@@ -660,6 +665,21 @@ function daysFromScore(score: number): string {
   return "มากกว่า 30 วัน";
 }
 
+/**
+ * Given a price the user wants to set vs the recommended price, estimate how
+ * fast it will sell + a plain-language difficulty. Used by the "set your own
+ * price" input so users see the trade-off live.
+ */
+export function estimateSaleFromPrice(
+  price: number,
+  recommendedPrice: number,
+): { score: number; days: string; difficulty: string } {
+  const score = priceScore(price, recommendedPrice);
+  const difficulty =
+    score >= 85 ? "ขายง่ายมาก" : score >= 70 ? "ขายง่าย" : score >= 50 ? "พอขายได้" : "ขายยาก";
+  return { score, days: daysFromScore(score), difficulty };
+}
+
 // ─── Main Evaluation ───
 
 export function evaluateItem(input: UserInput): PricingResult {
@@ -673,10 +693,10 @@ export function evaluateItem(input: UserInput): PricingResult {
   const condMultiplier = CONDITION_MULTIPLIER[condKey] || 0.58;
   const defMultiplier = DEFECT_MULTIPLIER[defKey] || 0.85;
 
-  let adjustedPrice = basePrice * condMultiplier * defMultiplier;
+  let adjustedPrice = basePrice * condMultiplier * defMultiplier * MARKET_UPLIFT;
 
   if (input.originalPrice && input.originalPrice > 0) {
-    const resaleCeiling = input.originalPrice * 0.55;
+    const resaleCeiling = input.originalPrice * 0.62;
     adjustedPrice = Math.min(adjustedPrice, resaleCeiling);
   }
 

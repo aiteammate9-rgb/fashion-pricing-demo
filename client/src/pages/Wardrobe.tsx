@@ -45,7 +45,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import Logo from "@/components/Logo";
-import { CATEGORIES, CATEGORY_GROUPS } from "@/lib/pricing-engine";
+import { CATEGORIES, CATEGORY_GROUPS, estimateSaleFromPrice } from "@/lib/pricing-engine";
 
 export default function WardrobePage() {
   const { user, loading: authLoading } = useAuth();
@@ -568,6 +568,18 @@ export default function WardrobePage() {
                     AI แนะนำ: ฿{listingItem.recommendedPrice.toLocaleString()}
                   </p>
                 )}
+                {listingItem.recommendedPrice && Number(listPrice) > 0 && (() => {
+                  const est = estimateSaleFromPrice(Number(listPrice), listingItem.recommendedPrice);
+                  const tone =
+                    est.score >= 70 ? "text-teal-700 bg-teal-50"
+                    : est.score >= 50 ? "text-amber-700 bg-amber-50"
+                    : "text-red-600 bg-red-50";
+                  return (
+                    <div className={`mt-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium ${tone}`}>
+                      ตั้งราคานี้ → คาดว่าขายได้ใน <b>{est.days}</b> · {est.difficulty}
+                    </div>
+                  );
+                })()}
               </div>
               <p className="text-[11px] text-muted-foreground">
                 เมื่อลงขาย ชิ้นนี้จะปรากฏให้ผู้ใช้คนอื่นเห็นใน "จับคู่ข้ามตู้" และซื้อได้
