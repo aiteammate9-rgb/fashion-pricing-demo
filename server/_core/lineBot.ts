@@ -16,6 +16,7 @@ import crypto from "crypto";
 import type { Express, Request, Response } from "express";
 import { ENV } from "./env";
 import { invokeLLM, type Message } from "./llm";
+import { sendOwnerTest } from "./creditAlert";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 const APP_URL = "https://app.sheowa.com";
@@ -179,7 +180,25 @@ export function registerLineBot(app: Express): void {
   });
 
   // Friendly GET so you can confirm the route is live in a browser.
+  // `verifyOn` tells you whether webhook signature checking is active (secret set).
   app.get("/line/webhook", (_req, res) => {
-    res.status(200).json({ ok: true, bot: "sheowa-line", configured: Boolean(ENV.lineMessagingToken) });
+    res.status(200).json({
+      ok: true,
+      bot: "sheowa-line",
+      tokenConfigured: Boolean(ENV.lineMessagingToken),
+      signatureVerifyOn: Boolean(ENV.lineMessagingSecret),
+      adminButtonOn: Boolean(ENV.lineAdminUrl),
+    });
+  });
+
+  // Guarded test: pushes a test message to the owner to verify the credit-alert
+  // destination. Open /line/test-owner?key=<CRON_SECRET> in a browser.
+  app.get("/line/test-owner", async (req, res) => {
+    if (!ENV.cronSecret || req.query.key !== ENV.cronSecret) {
+      res.status(403).json({ ok: false, reason: "bad or missing key" });
+      return;
+    }
+    const r = await sendOwnerTest();
+    res.status(r.ok ? 200 : 500).json(r);
   });
 }

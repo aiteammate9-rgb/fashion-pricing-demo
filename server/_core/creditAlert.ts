@@ -36,6 +36,41 @@ export function looksLikeCreditError(msg: string): boolean {
   );
 }
 
+/**
+ * Send a one-off TEST notice to the owner (bypasses throttle). Used by the
+ * guarded /line/test-owner endpoint to verify the alert destination works.
+ * Returns a clear reason so you can see exactly what's wrong if it fails.
+ */
+export async function sendOwnerTest(): Promise<{ ok: boolean; reason: string }> {
+  if (!ENV.lineMessagingToken) return { ok: false, reason: "LINE_MESSAGING_TOKEN not set in env" };
+  const to = ownerLineId();
+  if (!to) {
+    return {
+      ok: false,
+      reason: "OWNER_OPEN_ID missing/invalid — must be `line:<id>` or a raw `U...` LINE userId",
+    };
+  }
+  try {
+    const res = await fetch(LINE_PUSH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${ENV.lineMessagingToken}` },
+      body: JSON.stringify({
+        to,
+        messages: [
+          {
+            type: "text",
+            text: "✅ ทดสอบระบบแจ้งเตือน SHEOWA — ถ้าเห็นข้อความนี้ แปลว่าปลายทางแจ้งเตือนเจ้าของ (เครดิต API) ใช้งานได้",
+          },
+        ],
+      }),
+    });
+    if (!res.ok) return { ok: false, reason: `LINE push HTTP ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}` };
+    return { ok: true, reason: `ส่งสำเร็จไปที่ ${to.slice(0, 6)}… (เช็กไลน์เจ้าของ)` };
+  } catch (e) {
+    return { ok: false, reason: (e as Error)?.message ?? "fetch error" };
+  }
+}
+
 /** Fire-and-forget LINE alert to the owner. Throttled; never throws. */
 export async function notifyCreditExhausted(detail: string): Promise<void> {
   if (!ENV.lineMessagingToken) return;
