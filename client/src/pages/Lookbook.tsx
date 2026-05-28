@@ -28,6 +28,19 @@ import { Link } from "wouter";
 import AnalysisLoadingOverlay from "@/components/AnalysisLoadingOverlay";
 import ThaiDateSelect from "@/components/ThaiDateSelect";
 
+// โอกาสยอดฮิตของผู้หญิง Gen Y–Z (แตะเลือกได้ หรือพิมพ์เองในช่อง)
+const OCCASIONS = [
+  "คาเฟ่ / ชิลล์",
+  "ทำงาน / ออฟฟิศ",
+  "เดท",
+  "ปาร์ตี้ / ออกงานเย็น",
+  "ไปเที่ยว / ทริป",
+  "เรียน / มหาลัย",
+  "งานแต่ง / ทางการ",
+  "คอนเสิร์ต / อีเวนต์",
+  "ใส่เล่นทั่วไป",
+];
+
 function ColorSwatches({ palette }: { palette: Array<{ name: string; hex: string }> }) {
   if (!Array.isArray(palette) || palette.length === 0) return null;
   return (
@@ -322,6 +335,31 @@ export default function LookbookPage() {
                 </select>
               </label>
             </div>
+
+            {/* แตะเลือกโอกาสด่วน (เลือกได้ทีละอัน หรือพิมพ์เองด้านบน) */}
+            <div className="pt-0.5">
+              <p className="text-[11px] text-gray-400 mb-1.5">แตะเลือกโอกาส</p>
+              <div className="flex flex-wrap gap-2">
+                {OCCASIONS.map(o => {
+                  const on = occasion.trim() === o;
+                  return (
+                    <button
+                      key={o}
+                      type="button"
+                      onClick={() => setOccasion(on ? "" : o)}
+                      className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                        on
+                          ? "bg-teal-600 border-teal-600 text-white"
+                          : "bg-card border-input text-foreground hover:border-teal-300"
+                      }`}
+                    >
+                      {o}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="space-y-2.5 pt-1">
               <Button
                 className="w-full h-12 text-base font-semibold"
