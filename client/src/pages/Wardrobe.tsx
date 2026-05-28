@@ -312,7 +312,7 @@ export default function WardrobePage() {
               เริ่มสแกนเสื้อผ้าเพื่อเพิ่มเข้าตู้ของคุณ
             </p>
             <Button asChild className="bg-teal-600 hover:bg-teal-700">
-              <Link href="/">
+              <Link href="/sell">
                 <ScanLine className="w-4 h-4 mr-1.5" />
                 ไปสแกนเสื้อผ้า
               </Link>
