@@ -167,6 +167,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Lock the output syntax to what older iOS Safari can run — avoids
+    // white-screen on iOS WebKit when esbuild emits newer syntax.
+    target: ["es2020", "safari14", "chrome87", "firefox78", "edge88"],
   },
   server: {
     host: true,

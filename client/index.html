@@ -11,6 +11,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <script>
+      // Temporary on-screen error overlay (iOS white-screen debug).
+      // Remove once the iOS issue is resolved.
+      (function () {
+        function show(label, msg) {
+          var pre = document.createElement('pre');
+          pre.style.cssText = 'position:fixed;inset:0;margin:0;padding:16px;font:13px ui-monospace,monospace;background:#fff;color:#900;white-space:pre-wrap;overflow:auto;z-index:99999';
+          pre.textContent = label + ':\n' + msg;
+          document.body && document.body.appendChild(pre);
+        }
+        window.addEventListener('error', function (e) {
+          show('JS ERROR',
+            (e.message || '?') + '\nat ' + (e.filename || '') + ':' + (e.lineno || 0) + ':' + (e.colno || 0) +
+            '\n\n' + ((e.error && e.error.stack) || ''));
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          show('PROMISE REJECT',
+            (e.reason && (e.reason.stack || e.reason.message)) || String(e.reason));
+        });
+      })();
+    </script>
   </head>
 
   <body>
