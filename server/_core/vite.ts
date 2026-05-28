@@ -65,10 +65,24 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Hashed asset files (e.g. /assets/index-XXXX.js) carry their own content
+  // fingerprint — safe to cache aggressively. Everything else (HTML, /sheowa-logo.png)
+  // gets no-store so a new deploy is picked up on the next visit.
+  app.use(
+    express.static(distPath, {
+      setHeaders: (res, filePath) => {
+        if (/[\\/]assets[\\/].+\.[A-Za-z0-9_-]+\.(js|css|map|woff2?|ttf|svg|png|jpe?g|webp|avif)$/.test(filePath)) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        } else {
+          res.setHeader("Cache-Control", "no-store, must-revalidate");
+        }
+      },
+    })
+  );
 
-  // fall through to index.html if the file doesn't exist
+  // fall through to index.html if the file doesn't exist — never cache the SPA shell
   app.use("*", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store, must-revalidate");
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
